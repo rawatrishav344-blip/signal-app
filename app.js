@@ -3,7 +3,7 @@ tg.ready();
 tg.expand();
 
 // ⚠️ CONFIG — Termux tunnel URL yahan daalo, har restart par badalta hai
-const API_BASE = "https://YOUR-TERMUX-TUNNEL-URL.trycloudflare.com";
+const API_BASE = "https://drops-shame-sea-substantial.trycloudflare.com";
 
 const user = tg.initDataUnsafe?.user;
 const initData = tg.initData;
