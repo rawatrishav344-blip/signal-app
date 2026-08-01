@@ -2,9 +2,8 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-// ⚠️ CONFIG — bot ke backend URL se replace karna (Termux mein jab bot chalega,
-// cloudflared tunnel se ek public URL milega, wahi yahan daalna)
-const API_BASE = "https://reynolds-toll-jesse-totals.trycloudflare.com";
+// ⚠️ CONFIG — Termux tunnel URL yahan daalo, har restart par badalta hai
+const API_BASE = "https://drops-shame-sea-substantial.trycloudflare.com";
 
 const user = tg.initDataUnsafe?.user;
 const initData = tg.initData;
@@ -13,12 +12,12 @@ let contentData = [];
 let tasksData = [];
 let darkData = [];
 let darkUnlocked = false;
+let activeBand = "all";
+let currentPage = "home";
 
 // ---------- INIT ----------
 async function init() {
-  if (!user) {
-    return; // Telegram ke bahar khula hai, kuch nahi hoga
-  }
+  if (!user) return;
 
   fillProfile();
   document.getElementById("profileStatus").textContent = "Verified";
@@ -49,7 +48,7 @@ function fillProfile() {
   }
 }
 
-// ---------- CONTENT ----------
+// ---------- FLAGS ----------
 function getFlagEmoji(region) {
   const flags = {
     indian: "🇮🇳",
@@ -59,20 +58,24 @@ function getFlagEmoji(region) {
     us: "🇺🇸",
     korean: "🇰🇷",
     japanese: "🇯🇵",
+    pakistan: "🇵🇰",
+    pakistani: "🇵🇰",
+    iran: "🇮🇷",
+    iranian: "🇮🇷",
   };
-  return flags[region.toLowerCase()] || "🏳️";
+  return flags[region.toLowerCase()] || ""; // pehchana na jaye to koi flag nahi, sirf text
 }
+
+// ---------- CONTENT ----------
 async function loadContent() {
   try {
     const res = await fetch(`${API_BASE}/api/content`);
     contentData = await res.json();
-    renderContent("all");
+    renderContent();
   } catch (err) {
     console.error(err);
   }
 }
-
-let activeBand = "all";
 
 function renderContent(band) {
   if (band) activeBand = band;
@@ -93,37 +96,50 @@ function renderContent(band) {
   empty.classList.add("hidden");
 
   filtered.forEach((item) => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <div class="card-thumb" style="background-image:url('${item.thumbnail}')">
-        <div class="card-tags">
-          <span class="tag">Ep ${item.episode}</span>
-          ${item.duration ? `<span class="tag">${item.duration}</span>` : ""}
-          ${item.region ? `<span class="tag flag">${getFlagEmoji(item.region)} ${item.region}</span>` : ""}
-        </div>
-      </div>
-      <div class="card-actions">
-        <button class="btn-watch" data-deeplink="${item.deeplink}">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          Watch Now
-        </button>
-        <button class="btn-icon share-btn" data-title="${item.title}">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 6l-4-4-4 4M12 2v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-      </div>
-    `;
-    grid.appendChild(card);
+    grid.appendChild(buildContentCard(item, false));
   });
 
-  document.querySelectorAll(".btn-watch").forEach((btn) => {
+  document.querySelectorAll(".btn-watch[data-scope='content']").forEach((btn) => {
     btn.onclick = () => tg.openTelegramLink(btn.dataset.deeplink);
   });
   document.querySelectorAll(".share-btn").forEach((btn) => {
-    btn.onclick = () => {
-      tg.switchInlineQuery ? tg.switchInlineQuery(btn.dataset.title) : null;
-    };
+    btn.onclick = () => shareContent(btn.dataset.title, btn.dataset.link);
   });
+}
+
+function buildContentCard(item, isDark) {
+  const flag = item.region ? getFlagEmoji(item.region) : "";
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `
+    <div class="card-thumb" style="background-image:url('${item.thumbnail}')">
+      <div class="card-title-overlay">${item.title}</div>
+      <div class="card-tags">
+        <span class="tag">Episode ${item.episode}</span>
+        ${item.duration ? `<span class="tag">${item.duration}</span>` : ""}
+        ${item.region ? `<span class="tag flag">${flag ? flag + " " : ""}${item.region}</span>` : ""}
+      </div>
+    </div>
+    <div class="card-actions">
+      <button class="btn-watch" data-scope="${isDark ? "dark" : "content"}" data-deeplink="${item.deeplink}">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        Watch Now
+      </button>
+      ${
+        isDark
+          ? ""
+          : `<button class="btn-icon share-btn" data-title="${item.title}" data-link="${item.deeplink}">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 6l-4-4-4 4M12 2v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>`
+      }
+    </div>
+  `;
+  return card;
+}
+
+function shareContent(title, link) {
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(title)}`;
+  tg.openTelegramLink(shareUrl);
 }
 
 document.getElementById("bandSelect").addEventListener("click", (e) => {
@@ -137,7 +153,7 @@ function bindSearch() {
   document.getElementById("searchInput").addEventListener("input", () => renderContent());
 }
 
-// ---------- TASKS (channel list) ----------
+// ---------- TASKS (channels list) ----------
 async function loadTasks() {
   try {
     const res = await fetch(`${API_BASE}/api/channels`);
@@ -172,8 +188,11 @@ function bindDarkModal() {
   const modal = document.getElementById("darkModal");
   const input = document.getElementById("darkCodeInput");
   const errorEl = document.getElementById("darkModalError");
+  const submitBtn = document.getElementById("darkModalSubmit");
+  const cancelBtn = document.getElementById("darkModalCancel");
+  const darkBtn = document.getElementById("darkBtn");
 
-  document.getElementById("darkBtn").onclick = () => {
+  darkBtn.addEventListener("click", () => {
     if (darkUnlocked) {
       openDarkPage();
       return;
@@ -181,16 +200,22 @@ function bindDarkModal() {
     errorEl.classList.add("hidden");
     input.value = "";
     modal.classList.remove("hidden");
-  };
+  });
 
-  document.getElementById("darkModalCancel").onclick = () => {
+  cancelBtn.addEventListener("click", () => {
     modal.classList.add("hidden");
-  };
+  });
 
-  document.getElementById("darkModalSubmit").onclick = async () => {
+  submitBtn.addEventListener("click", handleDarkSubmit);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") handleDarkSubmit();
+  });
+
+  async function handleDarkSubmit() {
     const code = input.value.trim();
     if (!code) return;
 
+    submitBtn.disabled = true;
     try {
       const res = await fetch(`${API_BASE}/api/verify-dark-code`, {
         method: "POST",
@@ -201,30 +226,25 @@ function bindDarkModal() {
 
       if (data.valid) {
         darkUnlocked = true;
+        errorEl.classList.add("hidden");
         modal.classList.add("hidden");
-        loadDarkContent();
+        await loadDarkContent();
         openDarkPage();
       } else {
+        errorEl.textContent = "Galat code, dobara try karo.";
         errorEl.classList.remove("hidden");
       }
     } catch (err) {
-      errorEl.textContent = "Connection error. Try again.";
+      errorEl.textContent = "Connection error. Backend chal raha hai?";
       errorEl.classList.remove("hidden");
+    } finally {
+      submitBtn.disabled = false;
     }
-  };
+  }
 }
 
 function openDarkPage() {
-  const tabs = document.querySelectorAll(".tab");
-  const pages = [
-    document.getElementById("mainApp"),
-    document.getElementById("profilePage"),
-    document.getElementById("tasksPage"),
-    document.getElementById("darkPage"),
-  ];
-  tabs.forEach((t) => t.classList.remove("active"));
-  pages.forEach((p) => p.classList.add("hidden"));
-  document.getElementById("darkPage").classList.remove("hidden");
+  setActivePage("dark");
 }
 
 async function loadDarkContent() {
@@ -249,51 +269,47 @@ function renderDarkContent() {
   empty.classList.add("hidden");
 
   darkData.forEach((item) => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <div class="card-thumb" style="background-image:url('${item.thumbnail}')">
-        <div class="card-tags">
-          <span class="tag">Ep ${item.episode}</span>
-          ${item.duration ? `<span class="tag">${item.duration}</span>` : ""}
-        </div>
-      </div>
-      <div class="card-actions">
-        <button class="btn-watch dark-watch" data-deeplink="${item.deeplink}">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          Watch Now
-        </button>
-      </div>
-    `;
-    grid.appendChild(card);
+    grid.appendChild(buildContentCard(item, true));
   });
 
-  document.querySelectorAll(".dark-watch").forEach((btn) => {
+  document.querySelectorAll(".btn-watch[data-scope='dark']").forEach((btn) => {
     btn.onclick = () => tg.openTelegramLink(btn.dataset.deeplink);
   });
 }
 
-// ---------- NAV ----------
-function bindNav() {
+// ---------- NAV + SMART REFRESH ----------
+// Home par ruke rehte waqt refresh nahi hota (scroll disturb na ho).
+// Jab user kisi doosre tab pe jaake wapas Home aata hai, tabhi naya content check hota hai.
+function setActivePage(pageKey) {
   const tabs = document.querySelectorAll(".tab");
-  const home = document.getElementById("mainApp");
-  const profile = document.getElementById("profilePage");
-  const tasks = document.getElementById("tasksPage");
-  const dark = document.getElementById("darkPage");
+  const pageEls = {
+    home: document.getElementById("mainApp"),
+    profile: document.getElementById("profilePage"),
+    tasks: document.getElementById("tasksPage"),
+    dark: document.getElementById("darkPage"),
+  };
 
-  tabs.forEach((tab) => {
-    tab.onclick = () => {
-      tabs.forEach((t) => t.classList.remove("active"));
-      tab.classList.add("active");
-      [home, profile, tasks, dark].forEach((p) => p.classList.add("hidden"));
+  tabs.forEach((t) => t.classList.remove("active"));
+  Object.values(pageEls).forEach((p) => p.classList.add("hidden"));
 
-      const page = tab.dataset.page;
-      if (page === "home") home.classList.remove("hidden");
-      if (page === "profile") profile.classList.remove("hidden");
-      if (page === "tasks") tasks.classList.remove("hidden");
-    };
+  const matchingTab = document.querySelector(`.tab[data-page="${pageKey}"]`);
+  if (matchingTab) matchingTab.classList.add("active");
+  if (pageEls[pageKey]) pageEls[pageKey].classList.remove("hidden");
+
+  const cameBackToHome = pageKey === "home" && currentPage !== "home";
+  currentPage = pageKey;
+
+  if (cameBackToHome) {
+    loadContent();
+    loadTasks();
+  }
+}
+
+function bindNav() {
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => setActivePage(tab.dataset.page));
   });
 }
 
 init();
-                    
+  
