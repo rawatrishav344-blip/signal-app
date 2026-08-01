@@ -331,4 +331,3 @@ function bindNav() {
 }
 
 init();
-  
