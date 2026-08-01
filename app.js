@@ -3,34 +3,30 @@ tg.ready();
 tg.expand();
 
 // ⚠️ CONFIG — bot ke backend URL se replace karna (Termux mein jab bot chalega,
-// ngrok / cloudflared tunnel se ek public URL milega, wahi yahan daalna)
-const API_BASE = "https://YOUR-TERMUX-TUNNEL-URL.trycloudflare.com";
+// cloudflared tunnel se ek public URL milega, wahi yahan daalna)
+const API_BASE = "https://reynolds-toll-jesse-totals.trycloudflare.com";
 
 const user = tg.initDataUnsafe?.user;
 const initData = tg.initData;
 
 let contentData = [];
 let tasksData = [];
+let darkData = [];
+let darkUnlocked = false;
 
 // ---------- INIT ----------
 async function init() {
-  animateFreq();
-
   if (!user) {
-    document.getElementById("lockNote").textContent = "Telegram ke andar hi kholo yeh app.";
-    return;
+    return; // Telegram ke bahar khula hai, kuch nahi hoga
   }
 
   fillProfile();
-  await checkAccess();
+  document.getElementById("profileStatus").textContent = "Verified";
+  loadContent();
+  loadTasks();
   bindNav();
-}
-
-function animateFreq() {
-  const el = document.getElementById("freq");
-  setInterval(() => {
-    el.textContent = (Math.random() * 999).toFixed(1) + " MHz";
-  }, 2500);
+  bindSearch();
+  bindDarkModal();
 }
 
 // ---------- PROFILE ----------
@@ -53,43 +49,19 @@ function fillProfile() {
   }
 }
 
-// ---------- ACCESS CHECK ----------
-async function checkAccess() {
-  try {
-    const res = await fetch(`${API_BASE}/api/check-access`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ initData }),
-    });
-    const data = await res.json();
-
-    if (data.unlocked) {
-      showMainApp();
-    } else {
-      showLockScreen(data.channelLink);
-    }
-  } catch (err) {
-    document.getElementById("lockNote").textContent = "Connection error. Backend chal raha hai?";
-  }
-}
-
-function showLockScreen(channelLink) {
-  document.getElementById("joinBtn").href = channelLink || "#";
-  document.getElementById("verifyBtn").onclick = async () => {
-    document.getElementById("lockNote").textContent = "Checking...";
-    await checkAccess();
-  };
-}
-
-function showMainApp() {
-  document.getElementById("lockScreen").classList.add("hidden");
-  document.getElementById("mainApp").classList.remove("hidden");
-  document.getElementById("profileStatus").textContent = "Verified";
-  loadContent();
-  loadTasks();
-}
-
 // ---------- CONTENT ----------
+function getFlagEmoji(region) {
+  const flags = {
+    indian: "🇮🇳",
+    india: "🇮🇳",
+    global: "🌐",
+    usa: "🇺🇸",
+    us: "🇺🇸",
+    korean: "🇰🇷",
+    japanese: "🇯🇵",
+  };
+  return flags[region.toLowerCase()] || "🏳️";
+}
 async function loadContent() {
   try {
     const res = await fetch(`${API_BASE}/api/content`);
@@ -100,10 +72,18 @@ async function loadContent() {
   }
 }
 
+let activeBand = "all";
+
 function renderContent(band) {
+  if (band) activeBand = band;
   const grid = document.getElementById("contentGrid");
   const empty = document.getElementById("emptyState");
-  const filtered = band === "all" ? contentData : contentData.filter((c) => c.band === band);
+  const searchTerm = (document.getElementById("searchInput").value || "").trim().toLowerCase();
+
+  let filtered = activeBand === "all" ? contentData : contentData.filter((c) => c.band === activeBand);
+  if (searchTerm) {
+    filtered = filtered.filter((c) => c.title.toLowerCase().includes(searchTerm));
+  }
 
   grid.innerHTML = "";
   if (filtered.length === 0) {
@@ -119,15 +99,18 @@ function renderContent(band) {
       <div class="card-thumb" style="background-image:url('${item.thumbnail}')">
         <div class="card-tags">
           <span class="tag">Ep ${item.episode}</span>
-          ${item.isNew ? '<span class="tag live">NEW</span>' : ""}
+          ${item.duration ? `<span class="tag">${item.duration}</span>` : ""}
+          ${item.region ? `<span class="tag flag">${getFlagEmoji(item.region)} ${item.region}</span>` : ""}
         </div>
       </div>
-      <div class="card-body">
-        <div class="card-title">${item.title}</div>
-        <div class="card-actions">
-          <button class="btn-watch" data-deeplink="${item.deeplink}">▸ Watch Now</button>
-          <button class="btn-icon share-btn" data-title="${item.title}" data-link="${item.shareLink || ''}">↑</button>
-        </div>
+      <div class="card-actions">
+        <button class="btn-watch" data-deeplink="${item.deeplink}">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          Watch Now
+        </button>
+        <button class="btn-icon share-btn" data-title="${item.title}">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 6l-4-4-4 4M12 2v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
       </div>
     `;
     grid.appendChild(card);
@@ -150,6 +133,10 @@ document.getElementById("bandSelect").addEventListener("click", (e) => {
   renderContent(e.target.dataset.band);
 });
 
+function bindSearch() {
+  document.getElementById("searchInput").addEventListener("input", () => renderContent());
+}
+
 // ---------- TASKS (channel list) ----------
 async function loadTasks() {
   try {
@@ -168,7 +155,7 @@ function renderTasks() {
     const item = document.createElement("div");
     item.className = "task-item";
     item.innerHTML = `
-      <div class="task-dot"></div>
+      <div class="task-avatar">${(ch.name[0] || "?").toUpperCase()}</div>
       <div class="task-info">
         <div class="task-name">${ch.name}</div>
         <div class="task-sub">${ch.subtitle || "Channel"}</div>
@@ -180,19 +167,125 @@ function renderTasks() {
   });
 }
 
+// ---------- DARK (exclusive content) ----------
+function bindDarkModal() {
+  const modal = document.getElementById("darkModal");
+  const input = document.getElementById("darkCodeInput");
+  const errorEl = document.getElementById("darkModalError");
+
+  document.getElementById("darkBtn").onclick = () => {
+    if (darkUnlocked) {
+      openDarkPage();
+      return;
+    }
+    errorEl.classList.add("hidden");
+    input.value = "";
+    modal.classList.remove("hidden");
+  };
+
+  document.getElementById("darkModalCancel").onclick = () => {
+    modal.classList.add("hidden");
+  };
+
+  document.getElementById("darkModalSubmit").onclick = async () => {
+    const code = input.value.trim();
+    if (!code) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/verify-dark-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, initData }),
+      });
+      const data = await res.json();
+
+      if (data.valid) {
+        darkUnlocked = true;
+        modal.classList.add("hidden");
+        loadDarkContent();
+        openDarkPage();
+      } else {
+        errorEl.classList.remove("hidden");
+      }
+    } catch (err) {
+      errorEl.textContent = "Connection error. Try again.";
+      errorEl.classList.remove("hidden");
+    }
+  };
+}
+
+function openDarkPage() {
+  const tabs = document.querySelectorAll(".tab");
+  const pages = [
+    document.getElementById("mainApp"),
+    document.getElementById("profilePage"),
+    document.getElementById("tasksPage"),
+    document.getElementById("darkPage"),
+  ];
+  tabs.forEach((t) => t.classList.remove("active"));
+  pages.forEach((p) => p.classList.add("hidden"));
+  document.getElementById("darkPage").classList.remove("hidden");
+}
+
+async function loadDarkContent() {
+  try {
+    const res = await fetch(`${API_BASE}/api/dark-content`);
+    darkData = await res.json();
+    renderDarkContent();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderDarkContent() {
+  const grid = document.getElementById("darkGrid");
+  const empty = document.getElementById("darkEmptyState");
+
+  grid.innerHTML = "";
+  if (darkData.length === 0) {
+    empty.classList.remove("hidden");
+    return;
+  }
+  empty.classList.add("hidden");
+
+  darkData.forEach((item) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="card-thumb" style="background-image:url('${item.thumbnail}')">
+        <div class="card-tags">
+          <span class="tag">Ep ${item.episode}</span>
+          ${item.duration ? `<span class="tag">${item.duration}</span>` : ""}
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-watch dark-watch" data-deeplink="${item.deeplink}">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          Watch Now
+        </button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  document.querySelectorAll(".dark-watch").forEach((btn) => {
+    btn.onclick = () => tg.openTelegramLink(btn.dataset.deeplink);
+  });
+}
+
 // ---------- NAV ----------
 function bindNav() {
   const tabs = document.querySelectorAll(".tab");
   const home = document.getElementById("mainApp");
-  const lock = document.getElementById("lockScreen");
   const profile = document.getElementById("profilePage");
   const tasks = document.getElementById("tasksPage");
+  const dark = document.getElementById("darkPage");
 
   tabs.forEach((tab) => {
     tab.onclick = () => {
       tabs.forEach((t) => t.classList.remove("active"));
       tab.classList.add("active");
-      [home, profile, tasks].forEach((p) => p.classList.add("hidden"));
+      [home, profile, tasks, dark].forEach((p) => p.classList.add("hidden"));
 
       const page = tab.dataset.page;
       if (page === "home") home.classList.remove("hidden");
@@ -203,3 +296,4 @@ function bindNav() {
 }
 
 init();
+                    
