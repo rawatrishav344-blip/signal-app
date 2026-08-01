@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Signal</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="scan-overlay" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">◈</span>
+    <span class="brand-name">SIGNAL</span>
+  </div>
+  <div class="freq" id="freq">— — . — —</div>
+</header>
+
+<!-- LOCK SCREEN: shown until user has joined required channel -->
+<section id="lockScreen" class="lock-screen">
+  <div class="lock-card">
+    <div class="lock-icon">⌁</div>
+    <h1>Access Locked</h1>
+    <p>Frequency band abhi encrypted hai. Nीचे channel join karke signal unlock karo.</p>
+    <a id="joinBtn" class="btn-primary" href="#" target="_blank">Join Channel</a>
+    <button id="verifyBtn" class="btn-ghost">Maine Join Kar Liya — Verify Karo</button>
+    <div class="lock-note" id="lockNote"></div>
+  </div>
+</section>
+
+<!-- MAIN CONTENT (hidden until unlocked) -->
+<main id="mainApp" class="hidden">
+
+  <nav class="band-select" id="bandSelect">
+    <button class="band active" data-band="all">All</button>
+    <button class="band" data-band="new">New</button>
+    <button class="band" data-band="trending">Trending</button>
+  </nav>
+
+  <h2 class="section-title">ON AIR TODAY</h2>
+
+  <div id="contentGrid" class="grid">
+    <!-- cards injected by app.js -->
+  </div>
+
+  <div id="emptyState" class="empty-state hidden">
+    <div class="empty-icon">〰</div>
+    <p>Is band par abhi kuch nahi mil raha. Doosra band try karo.</p>
+  </div>
+
+</main>
+
+<footer class="tabbar">
+  <button class="tab active" data-page="home">
+    <span class="tab-icon">▣</span>
+    <span>Home</span>
+  </button>
+  <button class="tab" data-page="profile">
+    <span class="tab-icon">◉</span>
+    <span>Profile</span>
+  </button>
+  <button class="tab" data-page="tasks">
+    <span class="tab-icon">☰</span>
+    <span>Tasks</span>
+  </button>
+</footer>
+
+<!-- PROFILE PAGE -->
+<section id="profilePage" class="page hidden">
+  <div class="profile-card">
+    <div class="profile-avatar" id="profileAvatar">?</div>
+    <h2 id="profileName">—</h2>
+    <p id="profileUsername" class="muted">—</p>
+    <div class="profile-row">
+      <span>Telegram ID</span>
+      <span id="profileId">—</span>
+    </div>
+    <div class="profile-row">
+      <span>Status</span>
+      <span class="status-chip" id="profileStatus">Unverified</span>
+    </div>
+  </div>
+</section>
+
+<!-- TASKS PAGE -->
+<section id="tasksPage" class="page hidden">
+  <h2 class="section-title">CHANNELS</h2>
+  <div id="tasksList" class="tasks-list">
+    <!-- injected by app.js -->
+  </div>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>
