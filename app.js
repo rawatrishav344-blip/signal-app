@@ -3,7 +3,7 @@ tg.ready();
 tg.expand();
 
 // ⚠️ CONFIG — Termux tunnel URL yahan daalo, har restart par badalta hai
-const API_BASE = "https://drops-shame-sea-substantial.trycloudflare.com";
+const API_BASE = "https://YOUR-TERMUX-TUNNEL-URL.trycloudflare.com";
 
 const user = tg.initDataUnsafe?.user;
 const initData = tg.initData;
@@ -13,6 +13,7 @@ let tasksData = [];
 let darkData = [];
 let darkUnlocked = false;
 let activeBand = "all";
+let darkActiveBand = "all";
 let currentPage = "home";
 
 // ---------- INIT ----------
@@ -63,10 +64,10 @@ function getFlagEmoji(region) {
     iran: "🇮🇷",
     iranian: "🇮🇷",
   };
-  return flags[region.toLowerCase()] || ""; // pehchana na jaye to koi flag nahi, sirf text
+  return flags[region.toLowerCase()] || "";
 }
 
-// ---------- CONTENT ----------
+// ---------- HOME CONTENT (unchanged design) ----------
 async function loadContent() {
   try {
     const res = await fetch(`${API_BASE}/api/content`);
@@ -77,15 +78,26 @@ async function loadContent() {
   }
 }
 
+function todayString() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function renderContent(band) {
   if (band) activeBand = band;
   const grid = document.getElementById("contentGrid");
   const empty = document.getElementById("emptyState");
   const searchTerm = (document.getElementById("searchInput").value || "").trim().toLowerCase();
 
-  let filtered = activeBand === "all" ? contentData : contentData.filter((c) => c.band === activeBand);
+  let filtered = contentData;
+  if (activeBand === "new") {
+    filtered = filtered.filter((c) => c.uploadDate === todayString());
+  } else if (activeBand === "trending") {
+    filtered = filtered.filter((c) => c.band === "trending");
+  }
   if (searchTerm) {
-    filtered = filtered.filter((c) => c.title.toLowerCase().includes(searchTerm));
+    filtered = filtered.filter(
+      (c) => c.title.toLowerCase().includes(searchTerm) || String(c.episode).toLowerCase().includes(searchTerm)
+    );
   }
 
   grid.innerHTML = "";
@@ -95,19 +107,14 @@ function renderContent(band) {
   }
   empty.classList.add("hidden");
 
-  filtered.forEach((item) => {
-    grid.appendChild(buildContentCard(item, false));
-  });
+  filtered.forEach((item) => grid.appendChild(buildContentCard(item, "content")));
 
-  document.querySelectorAll(".btn-watch[data-scope='content']").forEach((btn) => {
+  document.querySelectorAll("#contentGrid .btn-watch").forEach((btn) => {
     btn.onclick = () => tg.openTelegramLink(btn.dataset.deeplink);
-  });
-  document.querySelectorAll(".share-btn").forEach((btn) => {
-    btn.onclick = () => shareContent(btn.dataset.title, btn.dataset.link);
   });
 }
 
-function buildContentCard(item, isDark) {
+function buildContentCard(item, scope) {
   const flag = item.region ? getFlagEmoji(item.region) : "";
   const card = document.createElement("div");
   card.className = "card";
@@ -121,39 +128,28 @@ function buildContentCard(item, isDark) {
       </div>
     </div>
     <div class="card-actions">
-      <button class="btn-watch" data-scope="${isDark ? "dark" : "content"}" data-deeplink="${item.deeplink}">
+      <button class="btn-watch" data-scope="${scope}" data-deeplink="${item.deeplink}">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
         Watch Now
       </button>
-      ${
-        isDark
-          ? ""
-          : `<button class="btn-icon share-btn" data-title="${item.title}" data-link="${item.deeplink}">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 6l-4-4-4 4M12 2v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>`
-      }
     </div>
   `;
   return card;
 }
 
-function shareContent(title, link) {
-  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(title)}`;
-  tg.openTelegramLink(shareUrl);
-}
-
 document.getElementById("bandSelect").addEventListener("click", (e) => {
   if (!e.target.classList.contains("band")) return;
-  document.querySelectorAll(".band").forEach((b) => b.classList.remove("active"));
+  document.querySelectorAll("#bandSelect .band").forEach((b) => b.classList.remove("active"));
   e.target.classList.add("active");
   renderContent(e.target.dataset.band);
 });
 
 function bindSearch() {
   document.getElementById("searchInput").addEventListener("input", () => renderContent());
+  document.getElementById("darkSearchInput").addEventListener("input", () => renderDarkContent());
 }
 
-// ---------- TASKS (channels list) ----------
+// ---------- CHANNELS (Earning Channels grid) ----------
 async function loadTasks() {
   try {
     const res = await fetch(`${API_BASE}/api/channels`);
@@ -165,25 +161,29 @@ async function loadTasks() {
 }
 
 function renderTasks() {
-  const list = document.getElementById("tasksList");
-  list.innerHTML = "";
+  const grid = document.getElementById("tasksList");
+  const empty = document.getElementById("tasksEmptyState");
+  grid.innerHTML = "";
+
+  if (tasksData.length === 0) {
+    empty.classList.remove("hidden");
+    return;
+  }
+  empty.classList.add("hidden");
+
   tasksData.forEach((ch) => {
-    const item = document.createElement("div");
-    item.className = "task-item";
-    item.innerHTML = `
-      <div class="task-avatar">${(ch.name[0] || "?").toUpperCase()}</div>
-      <div class="task-info">
-        <div class="task-name">${ch.name}</div>
-        <div class="task-sub">${ch.subtitle || "Channel"}</div>
-      </div>
-      <div class="task-arrow">›</div>
-    `;
-    item.onclick = () => tg.openTelegramLink(ch.link);
-    list.appendChild(item);
+    const box = document.createElement("div");
+    box.className = "channel-box";
+    if (ch.photo) {
+      box.style.backgroundImage = `url('${ch.photo}')`;
+    }
+    box.innerHTML = `<div class="channel-box-name">${ch.name}</div>`;
+    box.onclick = () => tg.openTelegramLink(ch.link);
+    grid.appendChild(box);
   });
 }
 
-// ---------- DARK (exclusive content) ----------
+// ---------- DARK (exclusive content) — Home jaisa layout ----------
 function bindDarkModal() {
   const modal = document.getElementById("darkModal");
   const input = document.getElementById("darkCodeInput");
@@ -202,10 +202,7 @@ function bindDarkModal() {
     modal.classList.remove("hidden");
   });
 
-  cancelBtn.addEventListener("click", () => {
-    modal.classList.add("hidden");
-  });
-
+  cancelBtn.addEventListener("click", () => modal.classList.add("hidden"));
   submitBtn.addEventListener("click", handleDarkSubmit);
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") handleDarkSubmit();
@@ -241,6 +238,14 @@ function bindDarkModal() {
       submitBtn.disabled = false;
     }
   }
+
+  document.getElementById("darkBandSelect").addEventListener("click", (e) => {
+    if (!e.target.classList.contains("band")) return;
+    document.querySelectorAll("#darkBandSelect .band").forEach((b) => b.classList.remove("active"));
+    e.target.classList.add("active");
+    darkActiveBand = e.target.dataset.band;
+    renderDarkContent();
+  });
 }
 
 function openDarkPage() {
@@ -260,26 +265,40 @@ async function loadDarkContent() {
 function renderDarkContent() {
   const grid = document.getElementById("darkGrid");
   const empty = document.getElementById("darkEmptyState");
+  const searchTerm = (document.getElementById("darkSearchInput").value || "").trim().toLowerCase();
+
+  // "dark" category matlab sab kuch (yeh page hi exclusive hai), baaki (today/indian/world)
+  // normal date/region ki tarah filter karte hain
+  let filtered = darkData;
+  if (darkActiveBand !== "all" && darkActiveBand !== "dark") {
+    filtered = filtered.filter((c) => {
+      if (darkActiveBand === "today") return c.uploadDate === todayString();
+      if (darkActiveBand === "indian") return (c.region || "").toLowerCase() === "indian";
+      if (darkActiveBand === "world") return c.region && c.region.toLowerCase() !== "indian";
+      return true;
+    });
+  }
+  if (searchTerm) {
+    filtered = filtered.filter(
+      (c) => c.title.toLowerCase().includes(searchTerm) || String(c.episode).toLowerCase().includes(searchTerm)
+    );
+  }
 
   grid.innerHTML = "";
-  if (darkData.length === 0) {
+  if (filtered.length === 0) {
     empty.classList.remove("hidden");
     return;
   }
   empty.classList.add("hidden");
 
-  darkData.forEach((item) => {
-    grid.appendChild(buildContentCard(item, true));
-  });
+  filtered.forEach((item) => grid.appendChild(buildContentCard(item, "dark")));
 
-  document.querySelectorAll(".btn-watch[data-scope='dark']").forEach((btn) => {
+  document.querySelectorAll("#darkGrid .btn-watch").forEach((btn) => {
     btn.onclick = () => tg.openTelegramLink(btn.dataset.deeplink);
   });
 }
 
 // ---------- NAV + SMART REFRESH ----------
-// Home par ruke rehte waqt refresh nahi hota (scroll disturb na ho).
-// Jab user kisi doosre tab pe jaake wapas Home aata hai, tabhi naya content check hota hai.
 function setActivePage(pageKey) {
   const tabs = document.querySelectorAll(".tab");
   const pageEls = {
