@@ -9,30 +9,13 @@
 </head>
 <body>
 
-<div class="scan-overlay" aria-hidden="true"></div>
+<!-- MAIN CONTENT: user yahan pahunchta hi tab hai jab bot pehle se verify kar chuka ho -->
+<main id="mainApp">
 
-<header class="topbar">
-  <div class="brand">
-    <span class="brand-mark">◈</span>
-    <span class="brand-name">SIGNAL</span>
+  <div class="searchbar">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <input type="text" id="searchInput" class="search-input" placeholder="Search content" />
   </div>
-  <div class="freq" id="freq">— — . — —</div>
-</header>
-
-<!-- LOCK SCREEN: shown until user has joined required channel -->
-<section id="lockScreen" class="lock-screen">
-  <div class="lock-card">
-    <div class="lock-icon">⌁</div>
-    <h1>Access Locked</h1>
-    <p>Frequency band abhi encrypted hai. Nीचे channel join karke signal unlock karo.</p>
-    <a id="joinBtn" class="btn-primary" href="#" target="_blank">Join Channel</a>
-    <button id="verifyBtn" class="btn-ghost">Maine Join Kar Liya — Verify Karo</button>
-    <div class="lock-note" id="lockNote"></div>
-  </div>
-</section>
-
-<!-- MAIN CONTENT (hidden until unlocked) -->
-<main id="mainApp" class="hidden">
 
   <nav class="band-select" id="bandSelect">
     <button class="band active" data-band="all">All</button>
@@ -40,31 +23,61 @@
     <button class="band" data-band="trending">Trending</button>
   </nav>
 
-  <h2 class="section-title">ON AIR TODAY</h2>
+  <div class="section-head">
+    <h2 class="section-title">Regular Content</h2>
+    <button class="popular-chip" id="darkBtn"><svg viewBox="0 0 24 24" fill="currentColor" class="star-icon"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.8L5.7 21l1.7-7-5.4-4.7 7.1-.6z"/></svg>DARK</button>
+  </div>
 
   <div id="contentGrid" class="grid">
     <!-- cards injected by app.js -->
   </div>
 
   <div id="emptyState" class="empty-state hidden">
-    <div class="empty-icon">〰</div>
-    <p>Is band par abhi kuch nahi mil raha. Doosra band try karo.</p>
+    <p>Is category mein abhi kuch nahi hai. Doosra try karo.</p>
   </div>
 
 </main>
 
+<!-- DARK CODE REDEEM POPUP -->
+<div id="darkModal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-icon"><svg viewBox="0 0 24 24" fill="currentColor" class="star-icon-lg"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.8L5.7 21l1.7-7-5.4-4.7 7.1-.6z"/></svg></div>
+    <h2>Enter DARK Code</h2>
+    <p>Exclusive content unlock karne ke liye code daalo</p>
+    <input type="text" id="darkCodeInput" class="modal-input" placeholder="Code yahan daalo" autocapitalize="characters" />
+    <div class="modal-error hidden" id="darkModalError">Galat code, dobara try karo.</div>
+    <div class="modal-actions">
+      <button class="btn-ghost-modal" id="darkModalCancel">Cancel</button>
+      <button class="btn-watch" id="darkModalSubmit">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- DARK CONTENT PAGE -->
+<section id="darkPage" class="page hidden">
+  <div class="section-head" style="padding-top:20px;">
+    <h2 class="section-title dark-title"><svg viewBox="0 0 24 24" fill="currentColor" class="star-icon"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.8L5.7 21l1.7-7-5.4-4.7 7.1-.6z"/></svg>Exclusive Content</h2>
+  </div>
+  <div id="darkGrid" class="grid">
+    <!-- injected by app.js -->
+  </div>
+  <div id="darkEmptyState" class="empty-state hidden">
+    <p>Abhi exclusive content available nahi hai.</p>
+  </div>
+</section>
+
 <footer class="tabbar">
   <button class="tab active" data-page="home">
-    <span class="tab-icon">▣</span>
+    <svg class="tab-icon" viewBox="0 0 24 24" fill="none"><path d="M3 11l9-7 9 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span>Home</span>
   </button>
   <button class="tab" data-page="profile">
-    <span class="tab-icon">◉</span>
+    <svg class="tab-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     <span>Profile</span>
   </button>
   <button class="tab" data-page="tasks">
-    <span class="tab-icon">☰</span>
-    <span>Tasks</span>
+    <svg class="tab-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18" stroke="currentColor" stroke-width="2"/><path d="M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <span>Channels</span>
   </button>
 </footer>
 
@@ -85,9 +98,11 @@
   </div>
 </section>
 
-<!-- TASKS PAGE -->
+<!-- TASKS/CHANNELS PAGE -->
 <section id="tasksPage" class="page hidden">
-  <h2 class="section-title">CHANNELS</h2>
+  <div class="section-head" style="padding-top:20px;">
+    <h2 class="section-title">Channels</h2>
+  </div>
   <div id="tasksList" class="tasks-list">
     <!-- injected by app.js -->
   </div>
