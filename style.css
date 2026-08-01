@@ -114,7 +114,7 @@ body {
 
 .card-thumb {
   width: 100%;
-  aspect-ratio: 16/11;
+  aspect-ratio: 992/1168;
   background: var(--surface);
   background-size: cover;
   background-position: center;
@@ -127,6 +127,17 @@ body {
   position: absolute;
   inset: 0;
   background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 38%, transparent 60%);
+}
+.card-title-overlay {
+  position: absolute;
+  bottom: 46px;
+  left: 12px;
+  right: 12px;
+  z-index: 2;
+  color: #fff;
+  font-size: 19px;
+  font-weight: 800;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
 }
 .card-tags {
   position: absolute;
@@ -145,7 +156,7 @@ body {
   padding: 5px 11px;
   border-radius: 999px;
 }
-.tag.flag { display: flex; align-items: center; gap: 4px; background: rgba(30,80,180,0.55); }
+.tag.flag { display: flex; align-items: center; gap: 4px; }
 
 .card-actions {
   display: flex;
@@ -357,4 +368,4 @@ body {
 /* ===== DARK PAGE ===== */
 .dark-title { display: flex; align-items: center; gap: 8px; color: var(--gold); }
 .dark-title .star-icon { color: var(--gold); }
-              
+    
