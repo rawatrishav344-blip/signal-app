@@ -273,34 +273,46 @@ body {
   font-weight: 700;
 }
 
-/* ===== CHANNELS/TASKS PAGE ===== */
-.tasks-list { display: flex; flex-direction: column; gap: 10px; padding: 0 0 20px; }
-.task-item {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  padding: 15px 16px;
-  display: flex;
-  align-items: center;
-  gap: 13px;
+/* ===== CHANNELS PAGE — photo box grid ===== */
+.channels-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 16px 20px;
 }
-.task-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--pink), var(--pink-2));
-  flex-shrink: 0;
+.channel-box {
+  aspect-ratio: 1/1;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.channel-box::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 55%);
+}
+.channel-box-name {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 2;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.channel-box.empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 15px;
-  color: #fff;
+  color: var(--muted-2);
+  font-size: 26px;
 }
-.task-info { flex: 1; min-width: 0; }
-.task-name { font-weight: 700; font-size: 14.5px; }
-.task-sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
-.task-arrow { color: var(--muted-2); font-size: 18px; flex-shrink: 0; }
 
 .hidden { display: none !important; }
 
@@ -368,4 +380,4 @@ body {
 /* ===== DARK PAGE ===== */
 .dark-title { display: flex; align-items: center; gap: 8px; color: var(--gold); }
 .dark-title .star-icon { color: var(--gold); }
-    
+                            
