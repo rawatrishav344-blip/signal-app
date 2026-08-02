@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AnimeZone - Profile</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+:root { --primary: #7C3AED; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #ffffff;
+  color: #1a1a2e;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  gap: 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #f0f0f0;
+}
+.back-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: #F3F4F6;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+.back-btn .material-icons-round { font-size: 20px; color: #374151; }
+.page-title { font-size: 17px; font-weight: 800; }
+
+.scroll-area { flex: 1; overflow-y: auto; }
+.scroll-area::-webkit-scrollbar { display: none; }
+
+.profile-hero {
+  padding: 28px 20px;
+  text-align: center;
+  background: linear-gradient(135deg, #F5F3FF, #EDE9FE);
+}
+.profile-avatar {
+  width: 84px; height: 84px; border-radius: 50%;
+  background: linear-gradient(135deg, #7C3AED, #A78BFA);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; font-weight: 800; color: white;
+  margin: 0 auto 14px;
+  background-size: cover; background-position: center;
+  border: 3px solid white;
+  box-shadow: 0 4px 14px rgba(124,58,237,0.25);
+}
+.profile-name { font-size: 18px; font-weight: 800; color: #1a1a2e; }
+.profile-username { font-size: 13px; color: #9CA3AF; margin-top: 3px; }
+
+.section-title {
+  font-size: 15px; font-weight: 700; color: #1a1a2e;
+  margin: 20px 14px 10px;
+}
+
+.channels-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; padding: 0 14px 20px;
+}
+.channel-box {
+  aspect-ratio: 1/1;
+  border-radius: 14px;
+  background: #F3F4F6;
+  background-size: cover; background-position: center;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+.channel-box::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%);
+}
+.channel-box-name {
+  position: absolute; bottom: 10px; left: 10px; right: 10px;
+  z-index: 2; color: white; font-size: 13px; font-weight: 700;
+}
+.empty-state { text-align: center; padding: 40px 24px; color: #9CA3AF; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="back-btn" onclick="window.location.href='index.html'">
+    <span class="material-icons-round">arrow_back</span>
+  </div>
+  <div class="page-title">Profile</div>
+</div>
+
+<div class="scroll-area">
+  <div class="profile-hero">
+    <div class="profile-avatar" id="profileAvatar">?</div>
+    <div class="profile-name" id="profileName">—</div>
+    <div class="profile-username" id="profileUsername">—</div>
+  </div>
+
+  <div class="section-title">Channels</div>
+  <div class="channels-grid" id="channelsGrid"></div>
+  <div class="empty-state" id="emptyState" style="display:none;">Abhi koi channel add nahi hua.</div>
+</div>
+
+<script>
+window.Telegram.WebApp.ready();
+window.Telegram.WebApp.expand();
+const tg = window.Telegram.WebApp;
+
+// ⚠️ CONFIG — Termux tunnel URL yahan daalo
+const API_BASE = "https://tied-jeremy-bacon-writing.trycloudflare.com";
+
+const user = tg.initDataUnsafe?.user;
+
+function fillProfile() {
+  if (!user) return;
+  const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  document.getElementById('profileName').textContent = fullName || 'Unknown';
+  document.getElementById('profileUsername').textContent = user.username ? '@' + user.username : 'no username';
+
+  const avatarEl = document.getElementById('profileAvatar');
+  if (user.photo_url) {
+    avatarEl.style.backgroundImage = `url(${user.photo_url})`;
+    avatarEl.textContent = '';
+  } else {
+    avatarEl.textContent = (fullName[0] || '?').toUpperCase();
+  }
+}
+
+async function loadChannels() {
+  try {
+    const res = await fetch(`${API_BASE}/api/channels`);
+    const channels = await res.json();
+    renderChannels(channels);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderChannels(channels) {
+  const grid = document.getElementById('channelsGrid');
+  const empty = document.getElementById('emptyState');
+
+  if (channels.length === 0) {
+    grid.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  grid.innerHTML = channels.map((ch) => `
+    <div class="channel-box" style="background-image:url('${ch.photo || ''}')" onclick="tg.openTelegramLink('${ch.link}')">
+      <div class="channel-box-name">${ch.name}</div>
+    </div>
+  `).join('');
+}
+
+fillProfile();
+loadChannels();
+</script>
+</body>
+</html>

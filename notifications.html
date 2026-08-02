@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AnimeZone - Notifications</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+:root { --primary: #7C3AED; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #ffffff;
+  color: #1a1a2e;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  gap: 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #f0f0f0;
+}
+.back-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: #F3F4F6;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+.back-btn .material-icons-round { font-size: 20px; color: #374151; }
+.page-title { font-size: 17px; font-weight: 800; }
+
+.scroll-area { flex: 1; overflow-y: auto; padding: 14px; }
+.scroll-area::-webkit-scrollbar { display: none; }
+
+.notif-card {
+  background: #F9FAFB;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 12px;
+}
+.notif-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #EDE9FE; color: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.notif-icon .material-icons-round { font-size: 18px; }
+.notif-text { font-size: 13.5px; color: #1a1a2e; line-height: 1.5; }
+.notif-date { font-size: 11px; color: #9CA3AF; margin-top: 5px; }
+
+.empty-state { text-align: center; padding: 60px 24px; color: #9CA3AF; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="back-btn" onclick="window.location.href='index.html'">
+    <span class="material-icons-round">arrow_back</span>
+  </div>
+  <div class="page-title">Notifications</div>
+</div>
+
+<div class="scroll-area">
+  <div id="notifList"></div>
+  <div class="empty-state" id="emptyState" style="display:none;">Abhi koi announcement nahi hai.</div>
+</div>
+
+<script>
+window.Telegram.WebApp.ready();
+window.Telegram.WebApp.expand();
+
+// ⚠️ CONFIG — Termux tunnel URL yahan daalo
+const API_BASE = "https://tied-jeremy-bacon-writing.trycloudflare.com";
+
+async function loadAnnouncements() {
+  try {
+    const res = await fetch(`${API_BASE}/api/announcements`);
+    const list = await res.json();
+    renderList(list);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function renderList(list) {
+  const container = document.getElementById('notifList');
+  const empty = document.getElementById('emptyState');
+
+  if (list.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+
+  container.innerHTML = list.map((n) => `
+    <div class="notif-card">
+      <div class="notif-icon"><span class="material-icons-round">campaign</span></div>
+      <div>
+        <div class="notif-text">${n.text}</div>
+        <div class="notif-date">${formatDate(n.date)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+loadAnnouncements();
+</script>
+</body>
+</html>
