@@ -148,14 +148,16 @@ body::-webkit-scrollbar { display: none; }
 .ep-info { flex: 1; padding-top: 4px; }
 .ep-info h4 { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
 .ep-info p { font-size: 11px; color: #9CA3AF; }
-.ep-dl {
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  background: #EDE9FE;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; cursor: pointer;
+.ep-actions {
+  display: flex; flex-direction: column; gap: 10px;
+  align-items: center; justify-content: flex-end;
+  padding-bottom: 2px; flex-shrink: 0;
 }
-.ep-dl .material-icons-round { font-size: 16px; color: var(--primary); }
+.ep-dl {
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.ep-dl .material-icons-round { font-size: 20px; color: #1a1a2e; }
 
 /* BOTTOM WATCH BTN */
 .bottom-bar {
@@ -352,11 +354,13 @@ function renderDetail() {
         <h4>${ep.title}</h4>
         <p>${ep.description || ''}</p>
       </div>
-      <div class="ep-dl" onclick="event.stopPropagation()">
-        <span class="material-icons-round">download</span>
-      </div>
-      <div class="ep-dl" onclick="event.stopPropagation(); shareEpisode('${ep.title.replace(/'/g, "\\'")}', '${ep.deeplink}')">
-        <span class="material-icons-round">share</span>
+      <div class="ep-actions">
+        <div class="ep-dl" onclick="event.stopPropagation()">
+          <span class="material-icons-round">download</span>
+        </div>
+        <div class="ep-dl" onclick="event.stopPropagation(); shareEpisode('${ep.title.replace(/'/g, "\\'")}', '${ep.deeplink}')">
+          <span class="material-icons-round">share</span>
+        </div>
       </div>
     </div>
   `).join('');
@@ -439,4 +443,4 @@ document.querySelector('.more-btn').addEventListener('click', function() {
 loadAnimeDetail();
 </script>
 </body>
-</html>
+  </html>
