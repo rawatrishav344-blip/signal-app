@@ -260,7 +260,7 @@ window.Telegram.WebApp.expand();
 const tg = window.Telegram.WebApp;
 
 // ⚠️ CONFIG — Termux tunnel URL yahan daalo
-const API_BASE = "https://gathered-commodity-alumni-extras.trycloudflare.com";
+const API_BASE = "https://directions-question-inch-programmers.trycloudflare.com";
 
 // Access guard — seedha URL type karke aana allow nahi hai
 if (sessionStorage.getItem('exclusiveUnlocked') !== 'true') {
@@ -356,18 +356,30 @@ document.getElementById('searchInput').addEventListener('input', renderGrid);
 // unke SDK docs ke mutabik call karo (show_ZONEID() jaisa function milega).
 // Ad complete hone ke baad callback mein deeplink open karo.
 function openExclusiveContent(deeplink) {
+  tryShowAd(deeplink, 0);
+}
+
+function tryShowAd(deeplink, attempt) {
   if (typeof window.show_11482366 === 'function') {
+    console.log('Monetag ad function mil gaya, ad dikha rahe hain...');
     window.show_11482366().then(() => {
+      console.log('Ad complete, content bhej rahe hain');
       tg.openTelegramLink(deeplink);
-    }).catch(() => {
-      tg.openTelegramLink(deeplink); // ad fail ho to bhi content de do
+    }).catch((err) => {
+      console.log('Ad fail hui:', err);
+      tg.openTelegramLink(deeplink);
     });
+  } else if (attempt < 3) {
+    console.log(`Monetag SDK abhi load nahi hui, retry ${attempt + 1}/3...`);
+    setTimeout(() => tryShowAd(deeplink, attempt + 1), 500);
   } else {
-    tg.openTelegramLink(deeplink); // Monetag script load nahi hui to seedha bhej do
+    console.log('Monetag SDK load hi nahi hui 3 attempts ke baad, seedha content bhej rahe hain');
+    tg.openTelegramLink(deeplink);
   }
 }
 
 loadExclusive();
 </script>
 </body>
-</html>
+  </html>
+    
