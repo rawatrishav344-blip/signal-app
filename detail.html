@@ -270,9 +270,39 @@ async function loadAnimeDetail() {
     const res = await fetch(`${API_BASE}/api/anime/${animeId}`);
     animeData = await res.json();
     renderDetail();
+    loadSimilarAnime();
   } catch (err) {
     console.error(err);
   }
+}
+
+async function loadSimilarAnime() {
+  try {
+    const res = await fetch(`${API_BASE}/api/anime/${animeId}/similar`);
+    const similar = await res.json();
+    renderSimilar(similar);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderSimilar(list) {
+  const grid = document.getElementById('moreGrid');
+  if (list.length === 0) {
+    grid.innerHTML = '<p style="grid-column:1/-1;color:#9CA3AF;font-size:13px;text-align:center;padding:20px 0;">Is category mein koi aur anime nahi hai.</p>';
+    return;
+  }
+  grid.innerHTML = list.map((a) => `
+    <div onclick="window.location.href='detail.html?id=${a.id}'" style="cursor:pointer;background:white;border-radius:14px;overflow:hidden;box-shadow:0 3px 12px rgba(0,0,0,0.08)">
+      <div style="aspect-ratio:2/3;overflow:hidden">
+        <img src="${a.thumbnail}" style="width:100%;height:100%;object-fit:cover">
+      </div>
+      <div style="padding:10px">
+        <div style="font-size:13px;font-weight:700;color:#1a1a2e">${a.name}</div>
+        <div style="font-size:11px;color:#9CA3AF;margin-top:2px">${a.meta || ''}</div>
+      </div>
+    </div>
+  `).join('');
 }
 
 function renderDetail() {
@@ -319,7 +349,7 @@ function renderDetail() {
         ${ep.duration ? `<div class="duration">${ep.duration}</div>` : ''}
       </div>
       <div class="ep-info">
-        <h4>${idx + 1}. ${ep.title}</h4>
+        <h4>${ep.title}</h4>
         <p>${ep.description || ''}</p>
       </div>
     </div>
