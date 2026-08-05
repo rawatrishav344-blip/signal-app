@@ -125,39 +125,47 @@ body::-webkit-scrollbar { display: none; }
 }
 .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
 
-/* EPISODE LIST */
-.ep-list { display: flex; flex-direction: column; gap: 12px; }
+/* --- FIXED EPISODE LIST CARD (CRUNCHYROLL STYLE) --- */
+.ep-list { display: flex; flex-direction: column; gap: 16px; }
 .ep-card {
-  display: flex; gap: 12px; align-items: flex-start;
+  display: flex; gap: 14px; align-items: center;
   cursor: pointer;
 }
 .ep-thumb {
-  width: 110px; height: 68px;
-  border-radius: 4px; overflow: hidden;
+  width: 140px; height: 80px; /* Bada Thumbnail */
+  border-radius: 6px; overflow: hidden;
   flex-shrink: 0;
-  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  background: #f0f0f0;
   position: relative;
 }
 .ep-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .ep-thumb .duration {
-  position: absolute; bottom: 5px; right: 6px;
-  background: rgba(0,0,0,0.7); color: white;
-  font-size: 10px; font-weight: 600;
-  padding: 2px 6px; border-radius: 5px;
+  position: absolute; bottom: 4px; right: 4px;
+  background: rgba(0,0,0,0.8); color: white;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 4px; border-radius: 3px;
 }
-.ep-info { flex: 1; padding-top: 4px; }
-.ep-info h4 { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
-.ep-info p { font-size: 11px; color: #9CA3AF; }
+.ep-info { flex: 1; min-width: 0; }
+.ep-info h4 { 
+  font-size: 14px; font-weight: 700; color: #1a1a2e; 
+  margin-bottom: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+}
+.ep-info p { 
+  font-size: 12px; color: #9CA3AF; 
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+}
 .ep-actions {
-  display: flex; flex-direction: column; gap: 10px;
-  align-items: center; justify-content: flex-end;
-  padding-bottom: 2px; flex-shrink: 0;
+  display: flex; flex-direction: row; gap: 12px; /* Vertical se Horizontal kiya */
+  align-items: center;
+  flex-shrink: 0;
 }
 .ep-dl {
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
-.ep-dl .material-icons-round { font-size: 20px; color: #1a1a2e; }
+.ep-dl .material-icons-round { font-size: 22px; color: #1a1a2e; opacity: 0.8; }
+/* --------------------------------------------------- */
 
 /* BOTTOM WATCH BTN */
 .bottom-bar {
@@ -180,21 +188,11 @@ body::-webkit-scrollbar { display: none; }
   cursor: pointer;
 }
 .watch-now-btn .material-icons-round { font-size: 20px; }
-.bookmark-btn {
-  width: 50px; height: 50px;
-  border-radius: 14px;
-  background: #EDE9FE;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; border: none;
-}
-.bookmark-btn .material-icons-round { font-size: 22px; color: var(--primary); }
 </style>
-<!-- Monetag rewarded interstitial ad SDK -->
 <script src='//libtl.com/sdk.js' data-zone='11482366' data-sdk='show_11482366'></script>
 </head>
 <body>
 
-<!-- HERO -->
 <div class="hero-wrap">
   <img class="hero-img" id="heroImg" src="" alt="Anime" style="background:#F3F4F6;">
   <div class="hero-overlay"></div>
@@ -203,11 +201,8 @@ body::-webkit-scrollbar { display: none; }
   </div>
 </div>
 
-<!-- CONTENT -->
 <div class="content">
-
   <div class="anime-title" id="animeTitle"></div>
-
   <div class="meta-row" id="metaRow">
     <span class="meta-badge primary" id="ageRatingBadge">—</span>
   </div>
@@ -217,35 +212,25 @@ body::-webkit-scrollbar { display: none; }
     <span class="rating-text" id="ratingText"></span>
   </div>
 
-  <p class="description" id="animeDesc"></p>
+  <p class="description" id="animeDesc" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"></p>
   <span class="more-btn">More Details</span>
 
-  <!-- TABS -->
   <div class="tabs">
     <div class="tab active" onclick="switchTab(this,'episodes')">Episodes</div>
     <div class="tab" onclick="switchTab(this,'more')">More Like This</div>
   </div>
 
-  <!-- DOWNLOAD ALL + EPISODE HEADER -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
     <div style="font-size:13px;font-weight:700;color:#1a1a2e" id="seasonLabel">Episodes</div>
   </div>
 
-  <!-- EPISODE LIST -->
-  <div class="ep-list" id="episodes">
-    <!-- filled by JS -->
-  </div>
+  <div class="ep-list" id="episodes"></div>
 
-  <!-- MORE LIKE THIS -->
   <div style="display:none" id="more">
-    <div id="moreGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <!-- filled by JS -->
-    </div>
+    <div id="moreGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
   </div>
-
 </div>
 
-<!-- BOTTOM BAR -->
 <div class="bottom-bar">
   <button class="watch-now-btn" id="watchNowBtn">
     <span class="material-icons-round">play_arrow</span>
@@ -257,9 +242,7 @@ body::-webkit-scrollbar { display: none; }
 window.Telegram.WebApp.ready();
 window.Telegram.WebApp.expand();
 
-// ⚠️ CONFIG — Termux tunnel URL yahan daalo
-const API_BASE = "https://mayor-down-wishes-academy.trycloudflare.com";
-
+const API_BASE = "https://explorer-ease-bacon-permissions.trycloudflare.com";
 const tg = window.Telegram.WebApp;
 const params = new URLSearchParams(window.location.search);
 const animeId = params.get('id');
@@ -273,9 +256,7 @@ async function loadAnimeDetail() {
     animeData = await res.json();
     renderDetail();
     loadSimilarAnime();
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 async function loadSimilarAnime() {
@@ -283,9 +264,7 @@ async function loadSimilarAnime() {
     const res = await fetch(`${API_BASE}/api/anime/${animeId}/similar`);
     const similar = await res.json();
     renderSimilar(similar);
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 function renderSimilar(list) {
@@ -296,9 +275,7 @@ function renderSimilar(list) {
   }
   grid.innerHTML = list.map((a) => `
     <div onclick="window.location.href='detail.html?id=${a.id}'" style="cursor:pointer;background:white;border-radius:14px;overflow:hidden;box-shadow:0 3px 12px rgba(0,0,0,0.08)">
-      <div style="aspect-ratio:2/3;overflow:hidden">
-        <img src="${a.thumbnail}" style="width:100%;height:100%;object-fit:cover">
-      </div>
+      <div style="aspect-ratio:2/3;overflow:hidden"><img src="${a.thumbnail}" style="width:100%;height:100%;object-fit:cover"></div>
       <div style="padding:10px">
         <div style="font-size:13px;font-weight:700;color:#1a1a2e">${a.name}</div>
         <div style="font-size:11px;color:#9CA3AF;margin-top:2px">${a.meta || ''}</div>
@@ -313,7 +290,6 @@ function renderDetail() {
   document.getElementById('animeDesc').textContent = animeData.description || 'Koi description nahi hai.';
   document.getElementById('seasonLabel').textContent = animeData.name;
 
-  // Meta badges: age rating + category tags (meta line se)
   document.getElementById('ageRatingBadge').textContent = animeData.ageRating ? `U/A ${animeData.ageRating}` : 'N/A';
   const metaRow = document.getElementById('metaRow');
   if (animeData.meta) {
@@ -326,7 +302,6 @@ function renderDetail() {
     });
   }
 
-  // Star rating
   if (animeData.rating && animeData.ratingCount) {
     document.getElementById('ratingRow').style.display = 'flex';
     const starsContainer = document.getElementById('starsContainer');
@@ -336,13 +311,11 @@ function renderDetail() {
     for (let i = 0; i < fullStars; i++) starsHtml += '<span class="material-icons-round">star</span>';
     if (hasHalf) starsHtml += '<span class="material-icons-round half">star_half</span>';
     starsContainer.innerHTML = starsHtml;
-
-    const countLabel = animeData.ratingCount >= 1000
-      ? (animeData.ratingCount / 1000).toFixed(1) + 'K'
-      : animeData.ratingCount;
+    const countLabel = animeData.ratingCount >= 1000 ? (animeData.ratingCount / 1000).toFixed(1) + 'K' : animeData.ratingCount;
     document.getElementById('ratingText').textContent = `${animeData.rating} (${countLabel} reviews)`;
   }
 
+  // UPDATED RENDER LOGIC FOR CARD
   const epListEl = document.getElementById('episodes');
   epListEl.innerHTML = animeData.episodes.map((ep, idx) => `
     <div class="ep-card">
@@ -352,7 +325,7 @@ function renderDetail() {
       </div>
       <div class="ep-info" onclick="openEpisode('${ep.deeplink}')">
         <h4>${ep.title}</h4>
-        <p>${ep.description || ''}</p>
+        <p>${ep.description || 'No description available'}</p>
       </div>
       <div class="ep-actions">
         <div class="ep-dl" onclick="event.stopPropagation()">
@@ -369,58 +342,24 @@ function renderDetail() {
     const firstEp = animeData.episodes[0];
     document.getElementById('watchNowLabel').textContent = `Start Watching E1`;
     document.getElementById('watchNowBtn').onclick = () => openEpisode(firstEp.deeplink);
-  } else {
-    document.getElementById('watchNowLabel').textContent = 'No episodes yet';
-    document.getElementById('watchNowBtn').onclick = () => {};
   }
 }
 
-// ⚠️ Point 11: Monetag rewarded-ad integration
-// Monetag dashboard se apna Zone ID lekar yahan daalo, aur is function ko
-// unke SDK docs ke mutabik call karo (show_ZONEID() jaisa function milega).
-// Ad complete hone ke baad callback mein deeplink open karo.
-function openEpisode(deeplink) {
-  tryShowAd(deeplink, 0);
-}
+function openEpisode(deeplink) { tryShowAd(deeplink, 0); }
 
 function shareEpisode(title, deeplink) {
   const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(deeplink)}&text=${encodeURIComponent(title)}`;
   tg.openTelegramLink(shareUrl);
 }
 
-// Telegram WebView mein kabhi-kabhi Monetag ka SDK deri se load hota hai,
-// isliye 3 baar tak thoda ruk kar check karte hain function ban gaya ya nahi.
-function showDebugBanner(text) {
-  let banner = document.getElementById('debugBanner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'debugBanner';
-    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#7C3AED;color:white;font-size:12px;padding:8px 12px;z-index:9999;text-align:center;';
-    document.body.appendChild(banner);
-  }
-  banner.textContent = text;
-}
-
 function tryShowAd(deeplink, attempt) {
   if (typeof window.show_11482366 === 'function') {
-    showDebugBanner('✅ Monetag mila, ad dikha rahe hain...');
-    window.show_11482366().then(() => {
-      showDebugBanner('✅ Ad complete!');
-      tg.openTelegramLink(deeplink);
-    }).catch((err) => {
-      showDebugBanner('❌ Ad fail: ' + (err?.message || err));
-      setTimeout(() => tg.openTelegramLink(deeplink), 1500);
-    });
+    window.show_11482366().then(() => tg.openTelegramLink(deeplink)).catch(() => tg.openTelegramLink(deeplink));
   } else if (attempt < 5) {
-    showDebugBanner(`⏳ Monetag SDK load ho rahi hai... (${attempt + 1}/5)`);
     setTimeout(() => tryShowAd(deeplink, attempt + 1), 600);
-  } else {
-    showDebugBanner('❌ Monetag SDK load hi nahi hui, seedha bhej rahe hain');
-    setTimeout(() => tg.openTelegramLink(deeplink), 1500);
-  }
+  } else { tg.openTelegramLink(deeplink); }
 }
 
-// TABS
 function switchTab(el, tabId) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
@@ -428,7 +367,6 @@ function switchTab(el, tabId) {
   document.getElementById('more').style.display = tabId === 'more' ? 'block' : 'none';
 }
 
-// More Details toggle
 document.querySelector('.more-btn').addEventListener('click', function() {
   const desc = document.getElementById('animeDesc');
   if(this.textContent === 'More Details') {
@@ -443,4 +381,4 @@ document.querySelector('.more-btn').addEventListener('click', function() {
 loadAnimeDetail();
 </script>
 </body>
-      </html>
+  </html>
