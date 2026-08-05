@@ -101,8 +101,15 @@ body::-webkit-scrollbar { display: none; }
 
 /* DESCRIPTION */
 .description {
-  font-size: 13px; color: #6B7280;
-  line-height: 1.6; margin-bottom: 4px;
+  font-size: 13px;
+  color: #6B7280;
+  line-height: 1.6;
+  margin-bottom: 4px;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 .more-btn {
   color: var(--primary); font-size: 13px;
@@ -128,11 +135,13 @@ body::-webkit-scrollbar { display: none; }
 /* EPISODE LIST */
 .ep-list { display: flex; flex-direction: column; gap: 12px; }
 .ep-card {
-  display: flex; gap: 12px; align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  align-items: center;
   cursor: pointer;
 }
 .ep-thumb {
-  width: 110px; height: 68px;
+  width: 128px; height: 72px;
   border-radius: 4px; overflow: hidden;
   flex-shrink: 0;
   background: linear-gradient(135deg, var(--primary-dark), var(--primary));
@@ -145,20 +154,39 @@ body::-webkit-scrollbar { display: none; }
   font-size: 10px; font-weight: 600;
   padding: 2px 6px; border-radius: 5px;
 }
-.ep-info { flex: 1; padding-top: 4px; }
-.ep-info h4 { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
-.ep-info p { font-size: 11px; color: #9CA3AF; }
-.ep-actions {
-  display: flex; flex-direction: column; gap: 10px;
-  align-items: center; justify-content: flex-end;
-  padding-bottom: 2px; flex-shrink: 0;
+.ep-info{
+  flex:1;
+  height:72px;
+  display:flex;
+  flex-direction:column;
 }
-.ep-dl {
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
-.ep-dl .material-icons-round { font-size: 20px; color: #1a1a2e; }
 
+.ep-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:18px;
+  margin-top:auto;
+}
+.ep-info h4{
+  font-size:13px;
+  font-weight:700;
+  color:#1a1a2e;
+  line-height:1.3;
+}
+.ep-info p { font-size: 11px; color: #9CA3AF; }
+
+
+.ep-dl{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.ep-dl .material-icons-round{
+  font-size:20px;
+  color:#1a1a2e;
+}
 /* BOTTOM WATCH BTN */
 .bottom-bar {
   position: fixed;
@@ -258,7 +286,7 @@ window.Telegram.WebApp.ready();
 window.Telegram.WebApp.expand();
 
 // ⚠️ CONFIG — Termux tunnel URL yahan daalo
-const API_BASE = "https://listprice-penny-peoples-golden.trycloudflare.com";
+const API_BASE = "https://mayor-down-wishes-academy.trycloudflare.com";
 
 const tg = window.Telegram.WebApp;
 const params = new URLSearchParams(window.location.search);
@@ -311,11 +339,23 @@ function renderDetail() {
   document.getElementById('animeTitle').textContent = animeData.name;
   document.getElementById('heroImg').src = animeData.thumbnail;
   document.getElementById('animeDesc').textContent = animeData.description || 'Koi description nahi hai.';
+const moreBtn = document.querySelector('.more-btn');
+
+setTimeout(() => {
+  const desc = document.getElementById('animeDesc');
+
+  if (desc.scrollHeight <= desc.clientHeight + 2) {
+    moreBtn.style.display = 'none';
+  } else {
+    moreBtn.style.display = 'inline-block';
+  }
+}, 100);
   document.getElementById('seasonLabel').textContent = animeData.name;
 
   // Meta badges: age rating + category tags (meta line se)
   document.getElementById('ageRatingBadge').textContent = animeData.ageRating ? `U/A ${animeData.ageRating}` : 'N/A';
   const metaRow = document.getElementById('metaRow');
+metaRow.innerHTML = '';
   if (animeData.meta) {
     const parts = animeData.meta.split('•').map(s => s.trim()).filter(Boolean);
     parts.forEach((p) => {
@@ -350,19 +390,24 @@ function renderDetail() {
         <img src="${ep.thumbnail}" alt="${ep.title}">
         ${ep.duration ? `<div class="duration">${ep.duration}</div>` : ''}
       </div>
-      <div class="ep-info" onclick="openEpisode('${ep.deeplink}')">
-        <h4>${ep.title}</h4>
-        <p>${ep.description || ''}</p>
-      </div>
-      <div class="ep-actions">
-        <div class="ep-dl" onclick="event.stopPropagation()">
-          <span class="material-icons-round">download</span>
-        </div>
-        <div class="ep-dl" onclick="event.stopPropagation(); shareEpisode('${ep.title.replace(/'/g, "\\'")}', '${ep.deeplink}')">
-          <span class="material-icons-round">share</span>
-        </div>
-      </div>
+     <div class="ep-info" onclick="openEpisode('${ep.deeplink}')">
+
+  <h4>${ep.title}</h4>
+
+  <div class="ep-actions">
+
+    <div class="ep-dl" onclick="event.stopPropagation()">
+      <span class="material-icons-round">download</span>
     </div>
+
+    <div class="ep-dl"
+         onclick="event.stopPropagation(); shareEpisode('${ep.title.replace(/'/g,"\\'")}','${ep.deeplink}')">
+      <span class="material-icons-round">share</span>
+    </div>
+
+  </div>
+
+</div>
   `).join('');
 
   if (animeData.episodes.length > 0) {
@@ -404,13 +449,16 @@ function showDebugBanner(text) {
 function tryShowAd(deeplink, attempt) {
   if (typeof window.show_11482366 === 'function') {
     showDebugBanner('✅ Monetag mila, ad dikha rahe hain...');
-    window.show_11482366().then(() => {
-      showDebugBanner('✅ Ad complete!');
-      tg.openTelegramLink(deeplink);
-    }).catch((err) => {
-      showDebugBanner('❌ Ad fail: ' + (err?.message || err));
-      setTimeout(() => tg.openTelegramLink(deeplink), 1500);
-    });
+    window.show_11482366()
+.then(() => {
+    showDebugBanner('✅ Ad complete!');
+    tg.openTelegramLink(deeplink);
+})
+.catch((err) => {
+    console.error(err);
+    showDebugBanner('⚠️ Ad skipped/failed');
+    tg.openTelegramLink(deeplink);
+});
   } else if (attempt < 5) {
     showDebugBanner(`⏳ Monetag SDK load ho rahi hai... (${attempt + 1}/5)`);
     setTimeout(() => tryShowAd(deeplink, attempt + 1), 600);
@@ -443,4 +491,4 @@ document.querySelector('.more-btn').addEventListener('click', function() {
 loadAnimeDetail();
 </script>
 </body>
-  </html>
+</html>
