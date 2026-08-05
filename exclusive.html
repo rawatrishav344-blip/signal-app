@@ -7,6 +7,10 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+<!-- Monetag SDK -->
+<script src='//libtl.com/sdk.js' data-zone='11482366' data-sdk='show_11482366'></script>
+
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 :root { --primary: #F59E0B; --primary-dark: #B45309; }
@@ -62,7 +66,6 @@ body {
   border: none; outline: none; background: transparent;
   font-size: 13px; width: 100%; font-family: 'Inter', sans-serif; color: #1a1a2e;
 }
-.search-tap input::placeholder { color: #9CA3AF; }
 
 /* FILTER PILLS */
 .filter-row {
@@ -99,15 +102,7 @@ body {
 .exclusive-banner-text h2 { font-size: 14px; font-weight: 800; color: #92400E; }
 .exclusive-banner-text p { font-size: 11px; color: #B45309; margin-top: 2px; }
 
-/* SECTION TITLE */
-.section-title {
-  font-size: 15px; font-weight: 700; color: #1a1a2e;
-  margin: 16px 14px 10px;
-  display: flex; align-items: center; gap: 8px;
-}
-.section-title .material-icons-round { font-size: 18px; color: var(--primary); }
-
-/* CONTENT GRID - card jaisa Signal mein tha, poster + tags + Watch Now */
+/* CONTENT GRID */
 .content-grid {
   display: flex; flex-direction: column;
   gap: 18px; margin: 0 14px 20px;
@@ -120,7 +115,7 @@ body {
 .content-thumb {
   position: relative; width: 100%; aspect-ratio: 2/3;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  background: #f3f3f3;
 }
 .content-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .content-thumb::after {
@@ -129,17 +124,17 @@ body {
   background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%);
 }
 .content-title-overlay {
-  position: absolute; bottom: 40px; left: 12px; right: 12px;
+  position: absolute; bottom: 42px; left: 12px; right: 12px;
   z-index: 2; color: white; font-size: 16px; font-weight: 800;
   text-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
 .content-tags {
-  position: absolute; bottom: 10px; left: 12px;
+  position: absolute; bottom: 12px; left: 12px;
   display: flex; gap: 6px; z-index: 2;
 }
 .content-tag {
   background: rgba(0,0,0,0.6); color: white;
-  font-size: 11px; font-weight: 600;
+  font-size: 10px; font-weight: 600;
   padding: 4px 10px; border-radius: 20px;
 }
 .content-actions { padding: 12px; }
@@ -152,9 +147,6 @@ body {
   display: flex; align-items: center; justify-content: center; gap: 6px;
   cursor: pointer;
 }
-.watch-now-btn .material-icons-round { font-size: 18px; }
-
-.empty-state { text-align: center; padding: 60px 24px; color: #9CA3AF; font-size: 13px; }
 
 /* NAVBAR */
 .navbar {
@@ -162,25 +154,19 @@ body {
   display: flex; justify-content: space-around;
   padding: 10px 0 14px;
   border-top: 1px solid #f0f0f0;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
 }
 .nav-item {
   display: flex; flex-direction: column; align-items: center;
-  cursor: pointer; padding: 6px 20px; border-radius: 12px;
-  transition: all 0.2s; gap: 3px;
+  cursor: pointer; padding: 6px 20px; border-radius: 12px; gap: 3px;
 }
 .nav-item .material-icons-round { font-size: 24px; color: #9CA3AF; }
 .nav-label { font-size: 11px; color: #9CA3AF; font-weight: 500; }
-.nav-item.active .material-icons-round { color: var(--primary); }
-.nav-item.active .nav-label { color: var(--primary); }
 .nav-item.active { background: #FFFBEB; }
+.nav-item.active .material-icons-round, .nav-item.active .nav-label { color: var(--primary); }
 </style>
-<!-- Monetag rewarded interstitial ad SDK -->
-<script src='//libtl.com/sdk.js' data-zone='11482366' data-sdk='show_11482366'></script>
 </head>
 <body>
 
-<!-- TOPBAR -->
 <div class="topbar">
   <div class="back-btn" onclick="window.location.href='index.html'">
     <span class="material-icons-round">arrow_back</span>
@@ -188,9 +174,7 @@ body {
   <div class="logo">
     <svg class="logo-icon" viewBox="0 0 40 40" fill="none">
       <circle cx="20" cy="20" r="20" fill="#F59E0B"/>
-      <path d="M20 8 L32 20 L20 32 L8 20 Z" fill="white" opacity="0.25"/>
       <path d="M20 12 L28 20 L20 28 L12 20 Z" fill="white"/>
-      <circle cx="20" cy="20" r="4" fill="#F59E0B"/>
     </svg>
     <div class="logo-text">
       <div class="top">EXCLU<span>SIVE</span></div>
@@ -199,9 +183,7 @@ body {
   </div>
 </div>
 
-<!-- SCROLL -->
 <div class="scroll-area">
-
   <div class="search-tap">
     <span class="material-icons-round">search</span>
     <input type="text" id="searchInput" placeholder="Search exclusive content...">
@@ -223,22 +205,10 @@ body {
     </div>
   </div>
 
-  <div class="section-title">
-    <span class="material-icons-round">workspace_premium</span>
-    Exclusive Content
-  </div>
-
-  <div class="content-grid" id="contentGrid">
-    <!-- filled by JS -->
-  </div>
-
-  <div class="empty-state" id="emptyState" style="display:none;">
-    Is category mein abhi kuch nahi hai.
-  </div>
-
+  <div class="content-grid" id="contentGrid"></div>
+  <div class="empty-state" id="emptyState" style="display:none; text-align:center; padding:40px; color:#9CA3AF;">Is category mein abhi kuch nahi hai.</div>
 </div>
 
-<!-- NAVBAR -->
 <div class="navbar">
   <div class="nav-item" onclick="window.location.href='earning.html'">
     <span class="material-icons-round">account_balance_wallet</span>
@@ -259,10 +229,9 @@ window.Telegram.WebApp.ready();
 window.Telegram.WebApp.expand();
 const tg = window.Telegram.WebApp;
 
-// ⚠️ CONFIG — Termux tunnel URL yahan daalo
-const API_BASE = "https://mayor-down-wishes-academy.trycloudflare.com";
+const API_BASE = "https://explorer-ease-bacon-permissions.trycloudflare-com";
 
-// Access guard — seedha URL type karke aana allow nahi hai
+// Security Guard
 if (sessionStorage.getItem('exclusiveUnlocked') !== 'true') {
   window.location.href = 'index.html';
 }
@@ -270,8 +239,13 @@ if (sessionStorage.getItem('exclusiveUnlocked') !== 'true') {
 let contentData = [];
 let activeFilter = 'all';
 
-function todayString() {
-  return new Date().toISOString().slice(0, 10);
+// DNS DETECTION (Fetch Method)
+async function isAdBlockActive() {
+    if (typeof window.show_11482366 !== 'function') return true;
+    try {
+        await fetch('https://libtl.com/sdk.js', { mode: 'no-cors', cache: 'no-store' });
+        return false;
+    } catch (e) { return true; }
 }
 
 async function loadExclusive() {
@@ -279,17 +253,7 @@ async function loadExclusive() {
     const res = await fetch(`${API_BASE}/api/exclusive-content`);
     contentData = await res.json();
     renderGrid();
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-function getFlagEmoji(region) {
-  const flags = {
-    indian: "🇮🇳", india: "🇮🇳", pakistan: "🇵🇰", pakistani: "🇵🇰",
-    iran: "🇮🇷", iranian: "🇮🇷", usa: "🇺🇸", us: "🇺🇸",
-  };
-  return flags[(region || '').toLowerCase()] || "";
+  } catch (err) { console.error(err); }
 }
 
 function renderGrid() {
@@ -299,16 +263,16 @@ function renderGrid() {
 
   let filtered = contentData;
   if (activeFilter === 'today') {
-    filtered = filtered.filter(c => c.uploadDate === todayString());
+      const today = new Date().toISOString().slice(0, 10);
+      filtered = filtered.filter(c => c.uploadDate === today);
   } else if (activeFilter === 'indian') {
-    filtered = filtered.filter(c => (c.region || '').toLowerCase() === 'indian');
+      filtered = filtered.filter(c => (c.region || '').toLowerCase() === 'indian');
   } else if (activeFilter === 'world') {
-    filtered = filtered.filter(c => c.region && c.region.toLowerCase() !== 'indian');
+      filtered = filtered.filter(c => c.region && c.region.toLowerCase() !== 'indian');
   }
+
   if (searchTerm) {
-    filtered = filtered.filter(c =>
-      c.title.toLowerCase().includes(searchTerm) || String(c.episode).toLowerCase().includes(searchTerm)
-    );
+    filtered = filtered.filter(c => c.title.toLowerCase().includes(searchTerm));
   }
 
   if (filtered.length === 0) {
@@ -318,27 +282,43 @@ function renderGrid() {
   }
   empty.style.display = 'none';
 
-  grid.innerHTML = filtered.map((item) => {
-    const flag = getFlagEmoji(item.region);
-    return `
-      <div class="content-card">
-        <div class="content-thumb">
-          <img src="${item.thumbnail}" alt="${item.title}">
-          <div class="content-title-overlay">${item.title}</div>
-          <div class="content-tags">
-            <span class="content-tag">Episode ${item.episode}</span>
-            ${item.duration ? `<span class="content-tag">${item.duration}</span>` : ''}
-            ${item.region ? `<span class="content-tag">${flag ? flag + ' ' : ''}${item.region}</span>` : ''}
-          </div>
-        </div>
-        <div class="content-actions">
-          <button class="watch-now-btn" onclick="openExclusiveContent('${item.deeplink}')">
-            <span class="material-icons-round">play_arrow</span> Watch Now
-          </button>
+  grid.innerHTML = filtered.map((item) => `
+    <div class="content-card">
+      <div class="content-thumb">
+        <img src="${item.thumbnail}" alt="${item.title}">
+        <div class="content-title-overlay">${item.title}</div>
+        <div class="content-tags">
+          <span class="content-tag">Episode ${item.episode}</span>
+          ${item.duration ? `<span class="content-tag">${item.duration}</span>` : ''}
+          ${item.region ? `<span class="content-tag">${item.region}</span>` : ''}
         </div>
       </div>
-    `;
-  }).join('');
+      <div class="content-actions">
+        <button class="watch-now-btn" onclick="openExclusiveContent('${item.deeplink}')">
+          <span class="material-icons-round">play_arrow</span> Watch Now
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ACTION WITH DNS SECURITY
+async function openExclusiveContent(deeplink) {
+    const blocked = await isAdBlockActive();
+    if (blocked) {
+        alert("⚠️ DNS / Ad-Blocker Detected!\n\nPlease disable Private DNS (AdGuard) or Ad-blocker to watch exclusive content.");
+        return;
+    }
+    
+    try {
+        window.show_11482366().then(() => {
+            tg.openTelegramLink(deeplink);
+        }).catch(() => {
+            tg.openTelegramLink(deeplink);
+        });
+    } catch (e) {
+        tg.openTelegramLink(deeplink);
+    }
 }
 
 document.getElementById('filterRow').addEventListener('click', (e) => {
@@ -350,44 +330,6 @@ document.getElementById('filterRow').addEventListener('click', (e) => {
 });
 
 document.getElementById('searchInput').addEventListener('input', renderGrid);
-
-// ⚠️ Point 11: Monetag rewarded-ad integration
-// Monetag dashboard se apna Zone ID lekar yahan daalo, aur is function ko
-// unke SDK docs ke mutabik call karo (show_ZONEID() jaisa function milega).
-// Ad complete hone ke baad callback mein deeplink open karo.
-function openExclusiveContent(deeplink) {
-  tryShowAd(deeplink, 0);
-}
-
-function showDebugBanner(text) {
-  let banner = document.getElementById('debugBanner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'debugBanner';
-    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#F59E0B;color:white;font-size:12px;padding:8px 12px;z-index:9999;text-align:center;';
-    document.body.appendChild(banner);
-  }
-  banner.textContent = text;
-}
-
-function tryShowAd(deeplink, attempt) {
-  if (typeof window.show_11482366 === 'function') {
-    showDebugBanner('✅ Monetag mila, ad dikha rahe hain...');
-    window.show_11482366().then(() => {
-      showDebugBanner('✅ Ad complete!');
-      tg.openTelegramLink(deeplink);
-    }).catch((err) => {
-      showDebugBanner('❌ Ad fail: ' + (err?.message || err));
-      setTimeout(() => tg.openTelegramLink(deeplink), 1500);
-    });
-  } else if (attempt < 5) {
-    showDebugBanner(`⏳ Monetag SDK load ho rahi hai... (${attempt + 1}/5)`);
-    setTimeout(() => tryShowAd(deeplink, attempt + 1), 600);
-  } else {
-    showDebugBanner('❌ Monetag SDK load hi nahi hui, seedha bhej rahe hain');
-    setTimeout(() => tg.openTelegramLink(deeplink), 1500);
-  }
-}
 
 loadExclusive();
 </script>
