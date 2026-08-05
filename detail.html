@@ -12,38 +12,160 @@
 <script src='//libtl.com/sdk.js' data-zone='11482366' data-sdk='show_11482366'></script>
 
 <style>
-/* CSS Wahi rahega jo pichle code mein tha (Crunchyroll Style) */
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 :root { --primary: #7C3AED; --primary-dark: #5B21B6; }
-body { font-family: 'Inter', sans-serif; background: #ffffff; color: #1a1a2e; height: 100vh; overflow-y: auto; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #ffffff;
+  color: #1a1a2e;
+  height: 100vh;
+  overflow-y: auto;
+}
 body::-webkit-scrollbar { display: none; }
-.hero-wrap { position: relative; width: 100%; height: 500px; overflow: hidden; }
-.hero-img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
-.hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 70%, rgba(255,255,255,1) 100%); }
-.back-btn { position: absolute; top: 14px; left: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+/* HERO IMAGE */
+.hero-wrap {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  overflow: hidden;
+}
+.hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+.hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.2) 70%,
+    rgba(255,255,255,1) 100%
+  );
+}
+.back-btn {
+  position: absolute;
+  top: 14px; left: 14px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
 .back-btn .material-icons-round { font-size: 28px; color: white; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+
+/* CONTENT */
 .content { padding: 0 16px 100px; margin-top: -30px; position: relative; }
-.anime-title { font-size: 26px; font-weight: 900; color: #1a1a2e; line-height: 1.2; margin-bottom: 8px; }
-.meta-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-.meta-badge { background: #F3F4F6; color: #6B7280; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 8px; }
-.meta-badge.primary { background: #EDE9FE; color: var(--primary); }
-.description { font-size: 13px; color: #6B7280; line-height: 1.6; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.more-btn { color: var(--primary); font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 20px; display: inline-block; }
-.tabs { display: flex; border-bottom: 2px solid #F3F4F6; margin-bottom: 16px; }
-.tab { padding: 10px 16px; font-size: 13px; font-weight: 600; color: #9CA3AF; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+
+.anime-title {
+  font-size: 26px; font-weight: 900;
+  color: #1a1a2e; line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.meta-row {
+  display: flex; align-items: center;
+  flex-wrap: wrap; gap: 6px;
+  margin-bottom: 12px;
+}
+.meta-badge {
+  background: #F3F4F6;
+  color: #6B7280;
+  font-size: 11px; font-weight: 600;
+  padding: 4px 10px; border-radius: 8px;
+}
+.meta-badge.primary {
+  background: #EDE9FE;
+  color: var(--primary);
+}
+
+/* RATING */
+.rating-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 16px;
+}
+.stars { display: flex; gap: 2px; }
+.stars .material-icons-round { font-size: 18px; color: #F59E0B; }
+.stars .material-icons-round.half { color: #D1D5DB; }
+.rating-text { font-size: 13px; color: #6B7280; font-weight: 500; }
+
+/* DESCRIPTION */
+.description {
+  font-size: 13px; color: #6B7280;
+  line-height: 1.6; margin-bottom: 4px;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.more-btn {
+  color: var(--primary); font-size: 13px;
+  font-weight: 600; cursor: pointer;
+  margin-bottom: 20px; display: inline-block;
+}
+
+/* TABS */
+.tabs {
+  display: flex; gap: 0;
+  border-bottom: 2px solid #F3F4F6;
+  margin-bottom: 16px;
+}
+.tab {
+  padding: 10px 16px;
+  font-size: 13px; font-weight: 600;
+  color: #9CA3AF; cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
 .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* --- EPISODE LIST (CRUNCHYROLL FIX) --- */
 .ep-list { display: flex; flex-direction: column; gap: 18px; }
-.ep-card { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; position: relative; min-height: 80px; }
-.ep-thumb { width: 140px; height: 80px; border-radius: 6px; overflow: hidden; flex-shrink: 0; background: #f3f3f3; position: relative; }
+.ep-card {
+  display: flex; gap: 12px; align-items: flex-start;
+  cursor: pointer; position: relative; min-height: 85px;
+}
+.ep-thumb {
+  width: 140px; height: 80px;
+  border-radius: 6px; overflow: hidden;
+  flex-shrink: 0; background: #f3f3f3; position: relative;
+}
 .ep-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.ep-thumb .duration { position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.8); color: white; font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 3px; }
-.ep-info { flex: 1; display: flex; flex-direction: column; padding-top: 2px; }
+.ep-thumb .duration {
+  position: absolute; bottom: 5px; right: 6px;
+  background: rgba(0,0,0,0.7); color: white;
+  font-size: 10px; font-weight: 600;
+  padding: 2px 6px; border-radius: 5px;
+}
+.ep-info { flex: 1; padding-top: 2px; display: flex; flex-direction: column; }
 .ep-info h4 { font-size: 14px; font-weight: 700; color: #1a1a2e; margin-bottom: 2px; line-height: 1.2; }
 .ep-info p { font-size: 11px; color: #9CA3AF; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.ep-actions { display: flex; gap: 12px; position: absolute; right: 0; bottom: 4px; flex-direction: row; align-items: center; }
+
+.ep-actions {
+  display: flex; flex-direction: row; gap: 14px;
+  position: absolute; right: 0; bottom: 4px; /* Image bottom line par align */
+  align-items: center;
+}
 .ep-dl .material-icons-round { font-size: 22px; color: #1a1a2e; opacity: 0.7; }
-.bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px 16px; border-top: 1px solid #f0f0f0; display: flex; gap: 10px; align-items: center; }
-.watch-now-btn { flex: 1; background: var(--primary); color: white; border: none; padding: 14px 0; border-radius: 14px; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+
+/* BOTTOM BAR */
+.bottom-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: white;
+  padding: 12px 16px;
+  border-top: 1px solid #f0f0f0;
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+  display: flex; gap: 10px; align-items: center;
+}
+.watch-now-btn {
+  flex: 1;
+  background: var(--primary);
+  color: white; border: none;
+  padding: 14px 0; border-radius: 14px;
+  font-size: 15px; font-weight: 700;
+  display: flex; align-items: center;
+  justify-content: center; gap: 8px;
+  cursor: pointer;
+}
+.watch-now-btn .material-icons-round { font-size: 20px; }
 </style>
 </head>
 <body>
@@ -61,15 +183,30 @@ body::-webkit-scrollbar { display: none; }
   <div class="meta-row" id="metaRow">
     <span class="meta-badge primary" id="ageRatingBadge">—</span>
   </div>
+
+  <div class="rating-row" id="ratingRow" style="display:none;">
+    <div class="stars" id="starsContainer"></div>
+    <span class="rating-text" id="ratingText"></span>
+  </div>
+
   <p class="description" id="animeDesc"></p>
   <span class="more-btn">More Details</span>
 
+  <!-- TABS -->
   <div class="tabs">
     <div class="tab active" onclick="switchTab(this,'episodes')">Episodes</div>
     <div class="tab" onclick="switchTab(this,'more')">More Like This</div>
   </div>
 
+  <div style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:14px" id="seasonLabel">Episodes</div>
+
+  <!-- EPISODE LIST -->
   <div class="ep-list" id="episodes"></div>
+
+  <!-- MORE LIKE THIS -->
+  <div style="display:none" id="more">
+    <div id="moreGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+  </div>
 </div>
 
 <div class="bottom-bar">
@@ -90,58 +227,79 @@ const animeId = params.get('id');
 
 let animeData = null;
 
-// --- ADVANCED DNS DETECTION ---
-async function isAdBlockOrDNSActive() {
-    // Check 1: Agar SDK variable hi nahi mila
+// DNS DETECTION
+async function isAdBlockActive() {
     if (typeof window.show_11482366 !== 'function') return true;
-
-    // Check 2: Try to fetch Monetag domain (Sabse solid DNS check)
     try {
-        const testRequest = await fetch('https://libtl.com/sdk.js', {
-            mode: 'no-cors',
-            cache: 'no-store'
-        });
-        return false; // Request reach ho gayi, matlab DNS off hai
-    } catch (e) {
-        return true; // Connection blocked, matlab AdGuard/DNS on hai
-    }
+        await fetch('https://libtl.com/sdk.js', { mode: 'no-cors', cache: 'no-store' });
+        return false;
+    } catch (e) { return true; }
 }
 
-async function openEpisode(deeplink) {
-    // Buttons click hone par check karein
-    const isBlocked = await isAdBlockOrDNSActive();
-    
-    if (isBlocked) {
-        alert("⚠️ DNS / AdGuard Detected!\n\nPlease disable Private DNS or Ad-blocker to play episodes. We need ads to keep this app free.");
-        return;
-    }
-
-    // Agar block nahi hai, toh ad dikhao
-    try {
-        window.show_11482366().then(() => {
-            tg.openTelegramLink(deeplink);
-        }).catch(() => {
-            tg.openTelegramLink(deeplink);
-        });
-    } catch (err) {
-        tg.openTelegramLink(deeplink);
-    }
-}
-
-// Baki render logic (Jo pehle tha wahi use karein)
 async function loadAnimeDetail() {
   if (!animeId) return;
   try {
     const res = await fetch(`${API_BASE}/api/anime/${animeId}`);
     animeData = await res.json();
     renderDetail();
+    loadSimilarAnime();
   } catch (err) { console.error(err); }
+}
+
+async function loadSimilarAnime() {
+  try {
+    const res = await fetch(`${API_BASE}/api/anime/${animeId}/similar`);
+    const similar = await res.json();
+    renderSimilar(similar);
+  } catch (err) { console.error(err); }
+}
+
+function renderSimilar(list) {
+  const grid = document.getElementById('moreGrid');
+  if (list.length === 0) {
+    grid.innerHTML = '<p style="grid-column:1/-1;color:#9CA3AF;font-size:13px;text-align:center;padding:20px 0;">Is category mein koi aur anime nahi hai.</p>';
+    return;
+  }
+  grid.innerHTML = list.map((a) => `
+    <div onclick="window.location.href='detail.html?id=${a.id}'" style="cursor:pointer;background:white;border-radius:14px;overflow:hidden;box-shadow:0 3px 12px rgba(0,0,0,0.08)">
+      <div style="aspect-ratio:2/3;overflow:hidden"><img src="${a.thumbnail}" style="width:100%;height:100%;object-fit:cover"></div>
+      <div style="padding:10px">
+        <div style="font-size:13px;font-weight:700;color:#1a1a2e">${a.name}</div>
+        <div style="font-size:11px;color:#9CA3AF;margin-top:2px">${a.meta || ''}</div>
+      </div>
+    </div>
+  `).join('');
 }
 
 function renderDetail() {
   document.getElementById('animeTitle').textContent = animeData.name;
   document.getElementById('heroImg').src = animeData.thumbnail;
   document.getElementById('animeDesc').textContent = animeData.description || 'No description.';
+  document.getElementById('seasonLabel').textContent = animeData.name;
+
+  document.getElementById('ageRatingBadge').textContent = animeData.ageRating ? `U/A ${animeData.ageRating}` : 'N/A';
+  const metaRow = document.getElementById('metaRow');
+  if (animeData.meta) {
+    animeData.meta.split('•').forEach((p) => {
+      const span = document.createElement('span');
+      span.className = 'meta-badge';
+      span.textContent = p.trim();
+      metaRow.appendChild(span);
+    });
+  }
+
+  if (animeData.rating && animeData.ratingCount) {
+    document.getElementById('ratingRow').style.display = 'flex';
+    const starsContainer = document.getElementById('starsContainer');
+    const fullStars = Math.floor(animeData.rating);
+    const hasHalf = animeData.rating - fullStars >= 0.5;
+    let starsHtml = '';
+    for (let i = 0; i < fullStars; i++) starsHtml += '<span class="material-icons-round">star</span>';
+    if (hasHalf) starsHtml += '<span class="material-icons-round half">star_half</span>';
+    starsContainer.innerHTML = starsHtml;
+    const countLabel = animeData.ratingCount >= 1000 ? (animeData.ratingCount / 1000).toFixed(1) + 'K' : animeData.ratingCount;
+    document.getElementById('ratingText').textContent = `${animeData.rating} (${countLabel} reviews)`;
+  }
 
   const epListEl = document.getElementById('episodes');
   epListEl.innerHTML = animeData.episodes.map((ep) => `
@@ -166,9 +324,19 @@ function renderDetail() {
   `).join('');
 
   if (animeData.episodes.length > 0) {
-    const firstEp = animeData.episodes[0];
-    document.getElementById('watchNowBtn').onclick = () => openEpisode(firstEp.deeplink);
+    document.getElementById('watchNowBtn').onclick = () => openEpisode(animeData.episodes[0].deeplink);
   }
+}
+
+async function openEpisode(deeplink) {
+    const blocked = await isAdBlockActive();
+    if (blocked) {
+        alert("⚠️ DNS / Ad-Blocker Detected!\n\nPlease disable Private DNS or Ad-blocker to play episodes.");
+        return;
+    }
+    try {
+        window.show_11482366().then(() => tg.openTelegramLink(deeplink)).catch(() => tg.openTelegramLink(deeplink));
+    } catch (e) { tg.openTelegramLink(deeplink); }
 }
 
 function shareEpisode(title, deeplink) {
@@ -179,9 +347,22 @@ function shareEpisode(title, deeplink) {
 function switchTab(el, tabId) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
+  document.getElementById('episodes').style.display = tabId === 'episodes' ? 'flex' : 'none';
+  document.getElementById('more').style.display = tabId === 'more' ? 'block' : 'none';
 }
+
+document.querySelector('.more-btn').addEventListener('click', function() {
+  const desc = document.getElementById('animeDesc');
+  if(this.textContent === 'More Details') {
+    desc.style.webkitLineClamp = 'unset';
+    this.textContent = 'Less';
+  } else {
+    desc.style.webkitLineClamp = '3';
+    this.textContent = 'More Details';
+  }
+});
 
 loadAnimeDetail();
 </script>
-</body>
+</body>  
 </html>
