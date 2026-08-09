@@ -342,28 +342,39 @@ function renderDetail() {
 // ACTION LOGIC
 async function openEpisode(deeplink) {
     const blocked = await isAdBlockOrDNSActive();
+
     if (blocked) {
-        alert("⚠️ DNS / Ad-Blocker Detected!\n\nPlease disable Private DNS or Ad-blocker to play episodes.");
+        alert(
+            "⚠️ DNS / Ad-Blocker Detected!\n\n" +
+            "Please disable Private DNS or Ad-blocker to play episodes."
+        );
         return;
     }
 
     let redirected = false;
+
     const goToDelivery = () => {
         if (redirected) return;
         redirected = true;
-        tg.openTelegramLink(deeplink);
+
+        try {
+            tg.openTelegramLink(deeplink);
+        } catch (e) {
+            window.location.href = deeplink;
+        }
     };
 
-    // Agar ad ka Promise 20 second mein resolve/reject na ho (jaise user X dabake close kare
-    // aur SDK atak jaye), toh bhi khud-ba-khud redirect kar do
-    const safetyTimer = setTimeout(goToDelivery, 20000);
-
     try {
-        window.show_11482366()
-            .then(() => { clearTimeout(safetyTimer); goToDelivery(); })
-            .catch(() => { clearTimeout(safetyTimer); goToDelivery(); });
+        // Ad ko pehle completely finish hone do.
+        // Promise resolve hone ke baad hi Delivery Bot open hoga.
+        await window.show_11482366();
+
+        goToDelivery();
+
     } catch (e) {
-        clearTimeout(safetyTimer);
+        console.log("Monetag ad error:", e);
+
+        // Agar ad SDK error de, tab Delivery Bot open hoga.
         goToDelivery();
     }
 }
