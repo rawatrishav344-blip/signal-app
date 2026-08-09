@@ -342,43 +342,29 @@ function renderDetail() {
 // ACTION LOGIC
 async function openEpisode(deeplink) {
     const blocked = await isAdBlockOrDNSActive();
-
     if (blocked) {
         alert("⚠️ DNS / Ad-Blocker Detected!\n\nPlease disable Private DNS or Ad-blocker to play episodes.");
         return;
     }
 
     let redirected = false;
-
-    const openDeliveryBot = () => {
+    const goToDelivery = () => {
         if (redirected) return;
         redirected = true;
-
-        try {
-            tg.openTelegramLink(deeplink);
-        } catch (e) {
-            window.location.href = deeplink;
-        }
+        tg.openTelegramLink(deeplink);
     };
 
+    // Agar ad ka Promise 4 second mein resolve/reject na ho (jaise user X dabake close kare
+    // aur SDK atak jaye), toh bhi khud-ba-khud redirect kar do
+    const safetyTimer = setTimeout(goToDelivery, 4000);
+
     try {
-        const adPromise = window.show_11482366();
-
-        if (adPromise && typeof adPromise.then === "function") {
-            adPromise
-                .then(() => openDeliveryBot())
-                .catch(() => openDeliveryBot());
-
-            // Agar Monetag callback na aaye
-            setTimeout(() => {
-                openDeliveryBot();
-            }, 10000);
-        } else {
-            openDeliveryBot();
-        }
-
+        window.show_11482366()
+            .then(() => { clearTimeout(safetyTimer); goToDelivery(); })
+            .catch(() => { clearTimeout(safetyTimer); goToDelivery(); });
     } catch (e) {
-        openDeliveryBot();
+        clearTimeout(safetyTimer);
+        goToDelivery();
     }
 }
 
