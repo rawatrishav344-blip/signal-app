@@ -342,13 +342,44 @@ function renderDetail() {
 // ACTION LOGIC
 async function openEpisode(deeplink) {
     const blocked = await isAdBlockOrDNSActive();
+
     if (blocked) {
         alert("⚠️ DNS / Ad-Blocker Detected!\n\nPlease disable Private DNS or Ad-blocker to play episodes.");
         return;
     }
+
+    let redirected = false;
+
+    const openDeliveryBot = () => {
+        if (redirected) return;
+        redirected = true;
+
+        try {
+            tg.openTelegramLink(deeplink);
+        } catch (e) {
+            window.location.href = deeplink;
+        }
+    };
+
     try {
-        window.show_11482366().then(() => tg.openTelegramLink(deeplink)).catch(() => tg.openTelegramLink(deeplink));
-    } catch (e) { tg.openTelegramLink(deeplink); }
+        const adPromise = window.show_11482366();
+
+        if (adPromise && typeof adPromise.then === "function") {
+            adPromise
+                .then(() => openDeliveryBot())
+                .catch(() => openDeliveryBot());
+
+            // Agar Monetag callback na aaye
+            setTimeout(() => {
+                openDeliveryBot();
+            }, 10000);
+        } else {
+            openDeliveryBot();
+        }
+
+    } catch (e) {
+        openDeliveryBot();
+    }
 }
 
 function shareEpisode(title, deeplink) {
