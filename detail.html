@@ -354,9 +354,9 @@ async function openEpisode(deeplink) {
         tg.openTelegramLink(deeplink);
     };
 
-    // Agar ad ka Promise 4 second mein resolve/reject na ho (jaise user X dabake close kare
+    // Agar ad ka Promise 20 second mein resolve/reject na ho (jaise user X dabake close kare
     // aur SDK atak jaye), toh bhi khud-ba-khud redirect kar do
-    const safetyTimer = setTimeout(goToDelivery, 4000);
+    const safetyTimer = setTimeout(goToDelivery, 20000);
 
     try {
         window.show_11482366()
