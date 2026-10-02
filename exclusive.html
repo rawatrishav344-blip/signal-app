@@ -89,7 +89,7 @@ body {
 .filter-pill.active { background: var(--primary); color: white; }
 
 .exclusive-banner {
-  margin: 14px 14px 0;
+  margin: 14px 14px 16px;
   background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
   border: 1.5px solid #FDE68A;
   border-radius: 16px;
@@ -163,6 +163,13 @@ body {
 .nav-label { font-size: 11px; color: #9CA3AF; font-weight: 500; }
 .nav-item.active { background: #FFFBEB; }
 .nav-item.active .material-icons-round, .nav-item.active .nav-label { color: var(--primary); }
+/* LOADING */
+.spinner {
+  width: 38px; height: 38px; margin: 0 auto;
+  border: 4px solid #FDE68A; border-top-color: var(--primary);
+  border-radius: 50%; animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -205,12 +212,19 @@ body {
     </div>
   </div>
 
+  <div id="loadingBox" style="display:none; text-align:center; padding:44px 20px;">
+    <div id="spinner" class="spinner"></div>
+    <div id="loadingText" style="font-size:14px; font-weight:700; color:#92400E; margin-top:16px;"></div>
+    <div id="loadingHint" style="font-size:12px; color:#9CA3AF; margin-top:6px;">Server start ho raha hai, thoda wait karo 🙏</div>
+    <button id="retryBtn" style="display:none; margin-top:14px; background:var(--primary); color:white; border:none; padding:10px 22px; border-radius:20px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer;">Dobara try karo</button>
+  </div>
+
   <div class="content-grid" id="contentGrid"></div>
   <div class="empty-state" id="emptyState" style="display:none; text-align:center; padding:40px; color:#9CA3AF;">Is category mein abhi kuch nahi hai.</div>
 </div>
 
 <div class="navbar">
-  <div class="nav-item" onclick="window.location.href='earning.html'">
+  <div class="nav-item" style="display:none" onclick="window.location.href='earning.html'">
     <span class="material-icons-round">account_balance_wallet</span>
     <span class="nav-label">Earning</span>
   </div>
@@ -244,12 +258,119 @@ async function isAdBlockActive() {
     } catch (e) { return true; }
 }
 
+// ---------- HELPERS ----------
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (ch) => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+));
+
+// "Dark 💀", "dark", "DARK" → "dark" (sirf letters, chhote)
+function regionKey(c) {
+  return String(c.region || '').toLowerCase().replace(/[^a-z]/g, '');
+}
+
+// Search: title ya episode number. "0001", "01", "1" teeno episode 1 dhundhte hain
+function matchesSearch(c, term) {
+  const title = String(c.title || '').toLowerCase();
+  const ep = String(c.episode || '').toLowerCase();
+  if (/^\d+$/.test(term)) {
+    const m = ep.match(/^\D*(\d+)\D*$/);
+    if (m && parseInt(m[1], 10) === parseInt(term, 10)) return true;
+    return title.includes(term);
+  }
+  return title.includes(term) || ep.includes(term);
+}
+
+// ---------- LOADING (Render server dheere jagta hai) ----------
+const LOAD_ESTIMATE_SEC = 45;           // server jagne ka andaaza
+const CACHE_KEY = 'exclusiveCache_v1';
+let loaded = false;
+let isLoading = false;
+let countdownTimer = null;
+let showLoaderTimer = null;
+
+function startCountdown() {
+  const box = document.getElementById('loadingBox');
+  const text = document.getElementById('loadingText');
+  document.getElementById('spinner').style.display = 'block';
+  document.getElementById('loadingHint').style.display = 'block';
+  document.getElementById('retryBtn').style.display = 'none';
+  let left = LOAD_ESTIMATE_SEC;
+  const tick = () => {
+    text.textContent = left > 0 ? `Content ${left} sec mein aa jayega…` : 'Bas thoda aur… almost ready';
+    if (left > 0) left--;
+  };
+  box.style.display = 'block';
+  tick();
+  clearInterval(countdownTimer);
+  countdownTimer = setInterval(tick, 1000);
+}
+
+function stopCountdown() {
+  clearTimeout(showLoaderTimer);
+  clearInterval(countdownTimer);
+  document.getElementById('loadingBox').style.display = 'none';
+}
+
+function showLoadError() {
+  clearInterval(countdownTimer);
+  document.getElementById('loadingBox').style.display = 'block';
+  document.getElementById('spinner').style.display = 'none';
+  document.getElementById('loadingHint').style.display = 'none';
+  document.getElementById('loadingText').textContent = 'Server se connect nahi ho paya.';
+  document.getElementById('retryBtn').style.display = 'inline-block';
+}
+
+document.getElementById('retryBtn').addEventListener('click', () => {
+  document.getElementById('loadingBox').style.display = 'none';
+  loadExclusive();
+});
+
 async function loadExclusive() {
+  if (isLoading) return;
+  isLoading = true;
+
+  // 1) Pehle se load (cached) hai to turant dikhao, countdown nahi
+  let hadCache = false;
   try {
-    const res = await fetch(`${API_BASE}/api/exclusive-content`);
-    contentData = await res.json();
-    renderGrid();
-  } catch (err) { console.error(err); }
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (Array.isArray(cached) && cached.length > 0) {
+      contentData = cached;
+      loaded = true;
+      hadCache = true;
+      renderGrid();
+    }
+  } catch (e) {}
+
+  // 2) Cache nahi hai aur server dheere de raha hai to countdown (tez load pe kuch nahi dikhega)
+  if (!hadCache) {
+    clearTimeout(showLoaderTimer);
+    showLoaderTimer = setTimeout(startCountdown, 1200);
+  }
+
+  // 3) Server se fresh data, fail ho to 6 baar tak retry
+  for (let attempt = 0; attempt < 6; attempt++) {
+    try {
+      const res = await fetch(`${API_BASE}/api/exclusive-content`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error('Bad data');
+      contentData = data;
+      loaded = true;
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (e) {}
+      stopCountdown();
+      isLoading = false;
+      renderGrid();
+      return;
+    } catch (err) {
+      console.error(err);
+      await new Promise((r) => setTimeout(r, 4000));
+    }
+  }
+  isLoading = false;
+  if (!hadCache) {
+    clearTimeout(showLoaderTimer);
+    showLoadError();
+  }
 }
 
 function renderGrid() {
@@ -257,18 +378,27 @@ function renderGrid() {
   const empty = document.getElementById('emptyState');
   const searchTerm = (document.getElementById('searchInput').value || '').trim().toLowerCase();
 
+  // Data aane se pehle "kuch nahi hai" mat dikhao
+  if (!loaded && contentData.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'none';
+    return;
+  }
+
   let filtered = contentData;
   if (activeFilter === 'today') {
       const today = new Date().toISOString().slice(0, 10);
       filtered = filtered.filter(c => c.uploadDate === today);
   } else if (activeFilter === 'indian') {
-      filtered = filtered.filter(c => (c.region || '').toLowerCase() === 'indian');
+      filtered = filtered.filter(c => regionKey(c) === 'indian');
   } else if (activeFilter === 'world') {
-      filtered = filtered.filter(c => c.region && c.region.toLowerCase() !== 'indian');
+      filtered = filtered.filter(c => { const k = regionKey(c); return k && k !== 'indian' && k !== 'dark'; });
+  } else if (activeFilter === 'dark') {
+      filtered = filtered.filter(c => regionKey(c) === 'dark');
   }
 
   if (searchTerm) {
-    filtered = filtered.filter(c => c.title.toLowerCase().includes(searchTerm));
+    filtered = filtered.filter(c => matchesSearch(c, searchTerm));
   }
 
   if (filtered.length === 0) {
@@ -281,12 +411,12 @@ function renderGrid() {
   grid.innerHTML = filtered.map((item) => `
     <div class="content-card">
       <div class="content-thumb">
-        <img src="${item.thumbnail}" alt="${item.title}">
-        <div class="content-title-overlay">${item.title}</div>
+        <img src="${esc(item.thumbnail)}" alt="${esc(item.title)}">
+        <div class="content-title-overlay">${esc(item.title)}</div>
         <div class="content-tags">
-          <span class="content-tag">Episode ${item.episode}</span>
-          ${item.duration ? `<span class="content-tag">${item.duration}</span>` : ''}
-          ${item.region ? `<span class="content-tag">${item.region}</span>` : ''}
+          <span class="content-tag">Episode ${esc(item.episode)}</span>
+          ${item.duration ? `<span class="content-tag">${esc(item.duration)}</span>` : ''}
+          ${item.region ? `<span class="content-tag">${esc(item.region)}</span>` : ''}
         </div>
       </div>
       <div class="content-actions">
@@ -330,5 +460,5 @@ document.getElementById('searchInput').addEventListener('input', renderGrid);
 loadExclusive();
 </script>
 </body>
-  </html>
-                              
+      </html>
+      
