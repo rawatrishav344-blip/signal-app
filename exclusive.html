@@ -168,7 +168,7 @@ body {
 <body>
 
 <div class="topbar">
-  <div class="back-btn" onclick="window.location.href='index.html'">
+  <div class="back-btn" style="display:none" onclick="window.location.href='index.html'">
     <span class="material-icons-round">arrow_back</span>
   </div>
   <div class="logo">
@@ -201,7 +201,7 @@ body {
     <span class="material-icons-round">workspace_premium</span>
     <div class="exclusive-banner-text">
       <h2>Exclusive Unlocked</h2>
-      <p>Yeh content sirf code se hi milta hai</p>
+      <p>Yeh content sirf yahin milta hai</p>
     </div>
   </div>
 
@@ -214,7 +214,7 @@ body {
     <span class="material-icons-round">account_balance_wallet</span>
     <span class="nav-label">Earning</span>
   </div>
-  <div class="nav-item" onclick="window.location.href='index.html'">
+  <div class="nav-item" style="display:none" onclick="window.location.href='index.html'">
     <span class="material-icons-round">home</span>
     <span class="nav-label">Home</span>
   </div>
@@ -231,10 +231,6 @@ const tg = window.Telegram.WebApp;
 
 const API_BASE = "https://animezone-bot.onrender.com";
 
-// Security Guard
-if (sessionStorage.getItem('exclusiveUnlocked') !== 'true') {
-  window.location.href = 'index.html';
-}
 
 let contentData = [];
 let activeFilter = 'all';
@@ -334,4 +330,5 @@ document.getElementById('searchInput').addEventListener('input', renderGrid);
 loadExclusive();
 </script>
 </body>
-</html>
+  </html>
+                              
