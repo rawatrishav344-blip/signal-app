@@ -137,7 +137,22 @@ body {
   font-size: 10px; font-weight: 600;
   padding: 4px 10px; border-radius: 20px;
 }
-.content-actions { padding: 12px; }
+.content-actions { padding: 12px; display: flex; gap: 10px; }
+.content-actions .watch-now-btn { flex: 1; min-width: 0; }
+.share-btn {
+  width: 48px; flex-shrink: 0;
+  background: #FFFBEB; color: #B45309;
+  border: 1.5px solid #F59E0B; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.share-btn .material-icons-round { font-size: 20px; }
+.shared-badge {
+  position: absolute; top: 12px; left: 12px; z-index: 2;
+  background: var(--primary); color: white;
+  font-size: 10px; font-weight: 700;
+  padding: 4px 10px; border-radius: 20px;
+}
 .watch-now-btn {
   width: 100%;
   background: var(--primary);
@@ -208,19 +223,19 @@ body {
     <span class="material-icons-round">workspace_premium</span>
     <div class="exclusive-banner-text">
       <h2>Exclusive Unlocked</h2>
-      <p>Yeh content sirf yahin milta hai</p>
+      <p>This content is available only here</p>
     </div>
   </div>
 
   <div id="loadingBox" style="display:none; text-align:center; padding:44px 20px;">
     <div id="spinner" class="spinner"></div>
     <div id="loadingText" style="font-size:14px; font-weight:700; color:#92400E; margin-top:16px;"></div>
-    <div id="loadingHint" style="font-size:12px; color:#9CA3AF; margin-top:6px;">Server start ho raha hai, thoda wait karo 🙏</div>
-    <button id="retryBtn" style="display:none; margin-top:14px; background:var(--primary); color:white; border:none; padding:10px 22px; border-radius:20px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer;">Dobara try karo</button>
+    <div id="loadingHint" style="font-size:12px; color:#9CA3AF; margin-top:6px;">The server is waking up, please wait a moment 🙏</div>
+    <button id="retryBtn" style="display:none; margin-top:14px; background:var(--primary); color:white; border:none; padding:10px 22px; border-radius:20px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer;">Try again</button>
   </div>
 
   <div class="content-grid" id="contentGrid"></div>
-  <div class="empty-state" id="emptyState" style="display:none; text-align:center; padding:40px; color:#9CA3AF;">Is category mein abhi kuch nahi hai.</div>
+  <div class="empty-state" id="emptyState" style="display:none; text-align:center; padding:40px; color:#9CA3AF;">Nothing here yet.</div>
 </div>
 
 <div class="navbar">
@@ -283,6 +298,12 @@ function matchesSearch(c, term) {
 // ---------- LOADING (Render server dheere jagta hai) ----------
 const LOAD_ESTIMATE_SEC = 45;           // server jagne ka andaaza
 const CACHE_KEY = 'exclusiveCache_v1';
+// Friend ke share link se aaye ho (?c=x001) to wahi content sabse upar dikhao
+const sharedId = (() => {
+  const c = new URLSearchParams(window.location.search).get('c');
+  return c && /^x\d{1,6}$/.test(c) ? c : null;
+})();
+
 let loaded = false;
 let isLoading = false;
 let countdownTimer = null;
@@ -296,7 +317,7 @@ function startCountdown() {
   document.getElementById('retryBtn').style.display = 'none';
   let left = LOAD_ESTIMATE_SEC;
   const tick = () => {
-    text.textContent = left > 0 ? `Content ${left} sec mein aa jayega…` : 'Bas thoda aur… almost ready';
+    text.textContent = left > 0 ? `Content will be ready in ${left} sec…` : 'Almost ready…';
     if (left > 0) left--;
   };
   box.style.display = 'block';
@@ -316,7 +337,7 @@ function showLoadError() {
   document.getElementById('loadingBox').style.display = 'block';
   document.getElementById('spinner').style.display = 'none';
   document.getElementById('loadingHint').style.display = 'none';
-  document.getElementById('loadingText').textContent = 'Server se connect nahi ho paya.';
+  document.getElementById('loadingText').textContent = 'Couldn\'t connect to the server.';
   document.getElementById('retryBtn').style.display = 'inline-block';
 }
 
@@ -401,6 +422,11 @@ function renderGrid() {
     filtered = filtered.filter(c => matchesSearch(c, searchTerm));
   }
 
+  // Shared content sabse upar (All tab, bina search ke)
+  if (sharedId && activeFilter === 'all' && !searchTerm) {
+    filtered = [...filtered].sort((a, b) => (b.id === sharedId) - (a.id === sharedId));
+  }
+
   if (filtered.length === 0) {
     grid.innerHTML = '';
     empty.style.display = 'block';
@@ -412,6 +438,7 @@ function renderGrid() {
     <div class="content-card">
       <div class="content-thumb">
         <img src="${esc(item.thumbnail)}" alt="${esc(item.title)}">
+        ${sharedId && item.id === sharedId ? '<div class="shared-badge">📩 Shared with you</div>' : ''}
         <div class="content-title-overlay">${esc(item.title)}</div>
         <div class="content-tags">
           <span class="content-tag">Episode ${esc(item.episode)}</span>
@@ -423,9 +450,33 @@ function renderGrid() {
         <button class="watch-now-btn" onclick="openExclusiveContent('${item.deeplink}')">
           <span class="material-icons-round">play_arrow</span> Watch Now
         </button>
+        ${item.shareLink ? `<button class="share-btn" aria-label="Share" onclick="shareContent('${esc(item.id)}')"><span class="material-icons-round">share</span></button>` : ''}
       </div>
     </div>
   `).join('');
+}
+
+// ---------- SHARE ----------
+function copyShareLink(link) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link)
+      .then(() => alert('Link copied!'))
+      .catch(() => prompt('Copy this link:', link));
+  } else {
+    prompt('Copy this link:', link);
+  }
+}
+
+function shareContent(id) {
+  const item = contentData.find((c) => c.id === id);
+  if (!item || !item.shareLink) return;
+  const text = `${item.title} 🔥 Watch it here:`;
+  const url = 'https://t.me/share/url?url=' + encodeURIComponent(item.shareLink) + '&text=' + encodeURIComponent(text);
+  try {
+    tg.openTelegramLink(url);
+  } catch (e) {
+    copyShareLink(item.shareLink);
+  }
 }
 
 // ACTION WITH DNS SECURITY
@@ -460,5 +511,4 @@ document.getElementById('searchInput').addEventListener('input', renderGrid);
 loadExclusive();
 </script>
 </body>
-      </html>
-      
+</html>
