@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AnimeZone - Earn</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+:root { --primary: #F59E0B; --primary-dark: #B45309; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #ffffff;
+  color: #1a1a2e;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.topbar { display: flex; align-items: center; padding: 10px 14px; gap: 10px; background: #ffffff; }
+.logo { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.logo-icon { width: 34px; height: 34px; }
+.logo-text { display: flex; flex-direction: column; line-height: 1; }
+.logo-text .top { font-size: 13px; font-weight: 900; color: #1a1a2e; letter-spacing: 1px; }
+.logo-text .top span { color: var(--primary); }
+.logo-text .bottom { font-size: 7px; font-weight: 700; letter-spacing: 3px; color: #9CA3AF; }
+
+.scroll-area { flex: 1; overflow-y: auto; }
+.scroll-area::-webkit-scrollbar { display: none; }
+
+/* PLACEHOLDER */
+.empty-page {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 90px 30px 40px;
+}
+.empty-icon {
+  width: 88px; height: 88px; border-radius: 50%;
+  background: #FFFBEB;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+}
+.empty-icon .material-icons-round { font-size: 42px; color: var(--primary); }
+.soon-pill {
+  background: #FEF3C7; color: var(--primary-dark);
+  font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+  padding: 5px 12px; border-radius: 20px; margin-bottom: 12px;
+}
+.empty-page h2 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+.empty-page p { font-size: 13px; color: #9CA3AF; line-height: 1.6; max-width: 280px; }
+
+/* NAVBAR */
+.navbar {
+  background: white;
+  display: flex; justify-content: space-around; gap: 4px;
+  padding: 10px 8px 14px;
+  border-top: 1px solid #f0f0f0;
+}
+.nav-item {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; align-items: center;
+  cursor: pointer; padding: 6px 0; border-radius: 12px; gap: 3px;
+}
+.nav-item .material-icons-round { font-size: 24px; color: #9CA3AF; }
+.nav-label { font-size: 11px; color: #9CA3AF; font-weight: 500; }
+.nav-item.active { background: #FFFBEB; }
+.nav-item.active .material-icons-round, .nav-item.active .nav-label { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <svg class="logo-icon" viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="20" r="20" fill="#F59E0B"/>
+      <path d="M20 12 L28 20 L20 28 L12 20 Z" fill="white"/>
+    </svg>
+    <div class="logo-text">
+      <div class="top">EA<span>RN</span></div>
+      <div class="bottom">ZONE</div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-area">
+  <div class="empty-page">
+    <div class="empty-icon"><span class="material-icons-round">account_balance_wallet</span></div>
+    <div class="soon-pill">COMING SOON</div>
+    <h2>Earning tasks are coming soon</h2>
+    <p>Complete simple tasks to earn rewards. We are getting everything ready!</p>
+  </div>
+</div>
+
+<div class="navbar">
+  <div class="nav-item" onclick="window.location.href='exclusive.html'">
+    <span class="material-icons-round">workspace_premium</span>
+    <span class="nav-label">Exclusive</span>
+  </div>
+  <div class="nav-item" onclick="window.location.href='store.html'">
+    <span class="material-icons-round">storefront</span>
+    <span class="nav-label">Store</span>
+  </div>
+  <div class="nav-item" onclick="window.location.href='games.html'">
+    <span class="material-icons-round">sports_esports</span>
+    <span class="nav-label">Games</span>
+  </div>
+  <div class="nav-item active">
+    <span class="material-icons-round">account_balance_wallet</span>
+    <span class="nav-label">Earn</span>
+  </div>
+</div>
+
+<script>
+window.Telegram.WebApp.ready();
+window.Telegram.WebApp.expand();
+</script>
+</body>
+</html>
