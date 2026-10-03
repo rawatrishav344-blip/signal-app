@@ -414,4 +414,155 @@ function renderPills() {
 
 function renderList() {
   const list = document.getElementById('list');
-  if (!l
+  if (!loaded) return;
+  const items = visibleProducts();
+  list.innerHTML = items.length ? items.map(cardHTML).join('') : emptyHTML();
+}
+
+function showSkeleton() {
+  document.getElementById('list').innerHTML =
+    '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+}
+
+/* ---------- product sheet ---------- */
+function openSheet(id) {
+  const p = products.find((x) => String(x.id) === String(id));
+  if (!p) return;
+  const d = discountOf(p);
+  const sold = isSoldOut(p);
+  const chips = [
+    p.category ? `<div class="chip">${ICON_TAG}${esc(p.category)}</div>` : '',
+    p.brand ? `<div class="chip"><span class="avatar" style="width:20px;height:20px;font-size:9px">${esc(initials(p.brand))}</span>${esc(p.brand)}</div>` : '',
+    p.rating ? `<div class="chip">★ ${esc(Number(p.rating).toFixed(1))}</div>` : '',
+  ].join('');
+  document.getElementById('sheet').innerHTML = `
+    <div class="sheet-hero">
+      ${artHTML(p)}
+      <button class="sheet-close" data-close="1" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="sheet-body">
+      <div class="sheet-title">${esc(p.title)}</div>
+      <div class="sheet-chips">${chips}</div>
+      <div class="sheet-price-row">
+        <div class="sheet-price">${esc(fmt(p.price, p.currency))}</div>
+        ${d ? `<div class="sheet-old">${esc(fmt(p.oldPrice, p.currency))}</div><div class="sheet-off">-${d}%</div>` : ''}
+      </div>
+      ${p.description ? `<div class="sheet-desc">${esc(p.description)}</div>` : ''}
+      <button class="buy-btn" data-buy="${esc(p.id)}" ${sold ? 'disabled' : ''}>${sold ? 'Sold out' : 'Buy Now'}</button>
+    </div>`;
+  document.getElementById('sheetBackdrop').classList.add('open');
+}
+function closeSheet() { document.getElementById('sheetBackdrop').classList.remove('open'); }
+
+let toastTimer = null;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.style.display = 'none'; }, 2200);
+}
+
+function buyNow(id) {
+  const p = products.find((x) => String(x.id) === String(id));
+  if (!p || isSoldOut(p)) return;
+  const link = String(p.buyLink || '').trim();
+  if (/^https:\/\/(t\.me|telegram\.me)\//i.test(link) && tg && tg.openTelegramLink) {
+    tg.openTelegramLink(link);
+  } else if (/^https?:\/\//i.test(link)) {
+    if (tg && tg.openLink) tg.openLink(link); else window.open(link, '_blank');
+  } else {
+    toast('Purchase link will be available soon');
+  }
+}
+
+/* ---------- events ---------- */
+document.getElementById('list').addEventListener('click', (e) => {
+  const card = e.target.closest('[data-id]');
+  if (card) openSheet(card.dataset.id);
+});
+document.getElementById('pills').addEventListener('click', (e) => {
+  const pill = e.target.closest('[data-cat]');
+  if (!pill) return;
+  category = pill.dataset.cat;
+  renderPills();
+  renderList();
+});
+document.getElementById('mainTabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('[data-tab]');
+  if (!tab) return;
+  mainTab = tab.dataset.tab;
+  document.querySelectorAll('#mainTabs .tab').forEach((t) => t.classList.toggle('active', t === tab));
+  renderList();
+});
+document.getElementById('subTabs').addEventListener('click', (e) => {
+  const sub = e.target.closest('[data-sub]');
+  if (!sub) return;
+  subTab = sub.dataset.sub;
+  document.querySelectorAll('#subTabs .seg').forEach((t) => t.classList.toggle('active', t === sub));
+  renderList();
+});
+document.getElementById('searchBtn').addEventListener('click', () => {
+  const row = document.getElementById('searchRow');
+  row.classList.toggle('open');
+  if (row.classList.contains('open')) document.getElementById('searchInput').focus();
+});
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  query = e.target.value.trim().toLowerCase();
+  renderList();
+});
+document.getElementById('sheetBackdrop').addEventListener('click', (e) => {
+  if (e.target.id === 'sheetBackdrop' || e.target.closest('[data-close]')) { closeSheet(); return; }
+  const buy = e.target.closest('[data-buy]');
+  if (buy) buyNow(buy.dataset.buy);
+});
+
+/* ---------- load ---------- */
+function afterLoad() {
+  loaded = true;
+  renderPills();
+  renderList();
+}
+
+async function loadProducts() {
+  if (DEMO) {
+    document.getElementById('demoNote').style.display = 'block';
+    products = DEMO_PRODUCTS;
+    afterLoad();
+    return;
+  }
+
+  showSkeleton();
+
+  // Pehle se load (cached) ho to turant dikhao
+  try {
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (Array.isArray(cached) && cached.length > 0) { products = cached; afterLoad(); }
+  } catch (e) {}
+
+  // Server dheere de to chhota hint
+  const hintTimer = setTimeout(() => {
+    if (!loaded) {
+      document.getElementById('list').insertAdjacentHTML('afterbegin',
+        '<div class="load-hint">Loading… the server may take a few seconds to wake up</div>');
+    }
+  }, 3000);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/store-products`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (!Array.isArray(data)) throw new Error('Bad data');
+    products = data;
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (e) {}
+  } catch (err) {
+    console.log('Store products unavailable:', err.message);
+  }
+  clearTimeout(hintTimer);
+  afterLoad();
+}
+
+loadProducts();
+</script>
+</body>
+</html>
