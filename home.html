@@ -223,7 +223,7 @@ button { font-family: inherit; }
     profile: '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
   };
   const PAGES = [
-    { id: 'home', href: 'index.html', label: 'Home' },
+    { id: 'home', href: 'home.html', label: 'Home' },
     { id: 'games', href: 'games.html', label: 'Games' },
     { id: 'store', href: 'store.html', label: 'Store' },
     { id: 'content', href: 'exclusive.html', label: 'Content' },
@@ -401,6 +401,13 @@ function renderAd() {
 }
 setInterval(renderAd, 1000);
 
+// Reward server (backend) dheere ya band ho to bhi ad na ruke
+let START_TIMEOUT_MS = 10000;
+const withTimeout = (p, ms) => Promise.race([
+  p,
+  new Promise((_, rej) => setTimeout(() => rej({ status: 0, message: 'timeout' }), ms)),
+]);
+
 async function watchAd() {
   if (busy || adCard.classList.contains('disabled')) return;
   setBusy(true, 'Preparing the ad…');
@@ -411,24 +418,33 @@ async function watchAd() {
       return;
     }
 
-    let start;
+    // 1) Reward token (server se). Server ready na ho to bhi ad chalega, bas coins nahi milenge
+    let token = null;
+    let rewardsOffline = false;
     try {
-      start = await App.api('/api/ad/start', { method: 'POST' });
+      const start = await withTimeout(App.api('/api/ad/start', { method: 'POST' }), START_TIMEOUT_MS);
+      token = start.token;
     } catch (e) {
-      if (e.status === 401) App.toast('Please open this app from the Telegram bot');
-      else if (e.status === 404 || e.status >= 500 || !e.status) App.toast('Rewards are not available right now. Please try again later');
-      else if (e.data && e.data.nextAdIn) { cooldownEnd = Date.now() + e.data.nextAdIn * 1000; App.toast(e.message); }
-      else App.toast(e.message || 'Please try again in a moment');
-      return;
+      if (e.status === 401) { App.toast('Please open this app from the Telegram bot'); return; }
+      if (e.status === 429) {
+        if (e.data && e.data.nextAdIn) cooldownEnd = Date.now() + e.data.nextAdIn * 1000;
+        App.toast(e.message || 'Please try again in a moment');
+        return;
+      }
+      rewardsOffline = true;   // 404 / 5xx / timeout / network
     }
 
+    // 2) Ad dikhao (Content page jaisa hi)
     let watched = false;
     try { await window.show_11482366(); watched = true; } catch (e) { watched = false; }
     if (!watched) { App.toast('Ad was not completed, so no reward this time'); return; }
 
+    if (rewardsOffline) { App.toast('Thanks for watching! Rewards are not available right now'); return; }
+
+    // 3) Coins lo
     setBusy(true, 'Crediting the reward…');
     try {
-      const res = await App.api('/api/ad/claim', { method: 'POST', body: { token: start.token } });
+      const res = await App.api('/api/ad/claim', { method: 'POST', body: { token } });
       App.setWallet(res);
       App.toast('+' + res.reward + ' coins added');
     } catch (e) {
@@ -447,4 +463,4 @@ App.loadWallet().catch(() => {});
 </script>
 </body>
   </html>
-                          
+    
