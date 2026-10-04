@@ -2,213 +2,201 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<style>html,body{background:#19000a}</style>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>AnimeZone - Exclusive</title>
+<title>AnimeZone - Content</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 
 <!-- Monetag SDK -->
 <script src='//libtl.com/sdk.js' data-zone='11482366' data-sdk='show_11482366'></script>
 
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-:root { --primary: #F59E0B; --primary-dark: #B45309; }
+/* =====================================================================
+   THEME — dark crimson (shared by all pages)
+   Pages: index.html (Home), games.html, store.html, exclusive.html
+   (Content), profile.html
+   ===================================================================== */
+:root {
+  --accent: #E8294F;
+  --accent-2: #F0476A;
+  --gold: #FBBF24;
+  --text: #ffffff;
+  --muted: #a99ca2;
+  --line: rgba(255, 255, 255, 0.10);
+  --panel: rgba(9, 3, 7, 0.88);
+  --page-bg: linear-gradient(180deg, #36000f 0%, #19000a 36%, #0b0005 62%, #2f000e 100%);
+}
 
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+html, body { height: 100%; }
 body {
-  font-family: 'Inter', sans-serif;
-  background: #ffffff;
-  color: #1a1a2e;
+  font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+  background: var(--page-bg);
+  color: var(--text);
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
+button { font-family: inherit; }
 
-.topbar {
-  display: flex;
-  align-items: center;
-  padding: 10px 14px;
-  gap: 10px;
-  background: #ffffff;
+/* ---------- page layout ---------- */
+.page { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 16px 120px; }
+.page::-webkit-scrollbar { display: none; }
+.page-title { font-size: 34px; font-weight: 800; letter-spacing: -1px; padding: 22px 4px 18px; }
+.section-title { font-size: 22px; font-weight: 800; padding: 26px 4px 6px; }
+.muted { color: var(--muted); }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 28px; }
+
+.coin { display: inline-flex; width: 1em; height: 1em; vertical-align: -0.12em; }
+.coin svg { width: 100%; height: 100%; }
+
+/* ---------- buttons ---------- */
+.btn-row { display: flex; gap: 12px; }
+.btn {
+  flex: 1; height: 54px; border: none; border-radius: 20px;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  font-size: 17px; font-weight: 700; color: #fff; cursor: pointer;
 }
-.logo { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.logo-icon { width: 34px; height: 34px; }
-.logo-text { display: flex; flex-direction: column; line-height: 1; }
-.logo-text .top { font-size: 13px; font-weight: 900; color: #1a1a2e; letter-spacing: 1px; }
-.logo-text .top span { color: var(--primary); }
-.logo-text .bottom { font-size: 7px; font-weight: 700; letter-spacing: 3px; color: #9CA3AF; }
+.btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.btn.primary { background: var(--accent); box-shadow: 0 8px 22px rgba(232, 41, 79, 0.35); }
+.btn.dark { background: #1a1316; border: 1px solid var(--line); }
 
-.back-btn {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  background: #F3F4F6;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; flex-shrink: 0;
+/* ---------- floating bottom navigation ---------- */
+.app-nav {
+  position: fixed; left: 14px; right: 14px; bottom: 14px; height: 74px; z-index: 40;
+  display: flex; align-items: center; gap: 2px; padding: 7px;
+  background: rgba(20, 14, 18, 0.94); border: 1px solid var(--line); border-radius: 34px;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
 }
-.back-btn .material-icons-round { font-size: 20px; color: #374151; }
+.nav-btn {
+  flex: 1; min-width: 0; height: 100%; border: none; background: none; border-radius: 27px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  color: #b9acb2; font-size: 11.5px; font-weight: 500; cursor: pointer;
+}
+.nav-btn svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nav-btn.active { background: #2a2327; color: var(--accent-2); }
 
-.scroll-area { flex: 1; overflow-y: auto; }
-.scroll-area::-webkit-scrollbar { display: none; }
+/* ---------- toast ---------- */
+#appToast {
+  position: fixed; left: 50%; bottom: 106px; transform: translateX(-50%);
+  background: rgba(30, 20, 26, 0.96); border: 1px solid var(--line); color: #fff;
+  font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px;
+  z-index: 90; max-width: 86%; text-align: center; display: none;
+}
+#appToast.show { display: block; }
 
-/* SEARCH */
+/* ---------- history sheet (shared) ---------- */
+.hs-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); display: flex; align-items: flex-end; z-index: 80; }
+.hs-sheet {
+  width: 100%; max-height: 80vh; overflow-y: auto; background: #120a0e;
+  border-radius: 28px 28px 0 0; border-top: 1px solid var(--line); padding: 10px 18px 28px;
+  animation: hsUp 0.25s ease;
+}
+@keyframes hsUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.hs-handle { width: 44px; height: 4px; border-radius: 4px; background: rgba(255, 255, 255, 0.2); margin: 4px auto 14px; }
+.hs-sheet h3 { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
+.hs-empty { text-align: center; color: var(--muted); font-size: 14px; padding: 36px 10px; }
+.hs-item { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+.hs-item:first-of-type { border-top: none; }
+.hs-ico { width: 44px; height: 44px; border-radius: 50%; background: rgba(232, 41, 79, 0.16); color: var(--accent-2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.hs-ico svg { width: 20px; height: 20px; fill: currentColor; }
+.hs-info { flex: 1; min-width: 0; }
+.hs-label { font-size: 15px; font-weight: 700; }
+.hs-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.hs-amt { font-size: 16px; font-weight: 800; color: var(--gold); white-space: nowrap; }
+
+</style>
+<style>
+
+/* ===== Content page ===== */
 .search-tap {
-  margin: 10px 14px 0;
-  background: #F3F4F6;
-  border-radius: 20px;
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  background: rgba(255,255,255,0.07); border: 1px solid var(--line);
+  border-radius: 22px; padding: 13px 16px;
 }
-.search-tap .material-icons-round { color: #9CA3AF; font-size: 18px; }
-.search-tap input {
-  border: none; outline: none; background: transparent;
-  font-size: 13px; width: 100%; font-family: 'Inter', sans-serif; color: #1a1a2e;
-}
+.search-tap svg { width: 20px; height: 20px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; flex-shrink: 0; }
+.search-tap input { border: none; background: transparent; width: 100%; color: #fff; font-size: 15px; font-family: inherit; }
+.search-tap input::placeholder { color: var(--muted); }
 
-/* FILTER PILLS */
-.filter-row {
-  display: flex; gap: 8px;
-  padding: 12px 14px 4px;
-  overflow-x: auto;
-}
+.filter-row { display: flex; gap: 8px; padding: 2px 0 12px; overflow-x: auto; }
 .filter-row::-webkit-scrollbar { display: none; }
 .filter-pill {
-  background: #F3F4F6;
-  border: none;
-  color: #6B7280;
-  font-family: 'Inter', sans-serif;
-  font-size: 12.5px; font-weight: 700;
-  padding: 8px 15px;
-  border-radius: 20px;
-  white-space: nowrap;
-  cursor: pointer;
-  flex-shrink: 0;
+  flex-shrink: 0; background: rgba(255,255,255,0.07); border: 1px solid transparent; color: #cbbfc5;
+  font-family: inherit; font-size: 13px; font-weight: 700; padding: 9px 16px; border-radius: 20px;
+  white-space: nowrap; cursor: pointer;
 }
-.filter-pill.active { background: var(--primary); color: white; }
+.filter-pill.active { background: var(--accent); color: #fff; box-shadow: 0 6px 16px rgba(232,41,79,0.3); }
 
 .exclusive-banner {
-  margin: 14px 14px 16px;
-  background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
-  border: 1.5px solid #FDE68A;
-  border-radius: 16px;
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px; margin: 4px 0 18px;
+  background: linear-gradient(135deg, rgba(232,41,79,0.20), rgba(232,41,79,0.06));
+  border: 1px solid rgba(232,41,79,0.4); border-radius: 24px;
 }
-.exclusive-banner .material-icons-round { font-size: 26px; color: var(--primary); }
-.exclusive-banner-text h2 { font-size: 14px; font-weight: 800; color: #92400E; }
-.exclusive-banner-text p { font-size: 11px; color: #B45309; margin-top: 2px; }
+.banner-ico { width: 42px; height: 42px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 6px 16px rgba(232,41,79,0.35); }
+.banner-ico svg { width: 20px; height: 20px; fill: #fff; }
+.exclusive-banner-text h2 { font-size: 15px; font-weight: 800; color: #ffe3e8; }
+.exclusive-banner-text p { font-size: 12px; color: #f3a9b8; margin-top: 2px; }
 
-/* CONTENT GRID */
-.content-grid {
-  display: flex; flex-direction: column;
-  gap: 18px; margin: 0 14px 20px;
-}
+.content-grid { display: flex; flex-direction: column; gap: 18px; margin: 0 0 20px; }
 .content-card {
-  background: white; border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 3px 14px rgba(0,0,0,0.09);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 28px; overflow: hidden;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.4);
 }
-.content-thumb {
-  position: relative; width: 100%; aspect-ratio: 2/3;
-  overflow: hidden;
-  background: #f3f3f3;
-}
-.content-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.content-thumb::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%);
-}
-.content-title-overlay {
-  position: absolute; bottom: 42px; left: 12px; right: 12px;
-  z-index: 2; color: white; font-size: 16px; font-weight: 800;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-}
-.content-tags {
-  position: absolute; bottom: 12px; left: 12px;
-  display: flex; gap: 6px; z-index: 2;
-}
-.content-tag {
-  background: rgba(0,0,0,0.6); color: white;
-  font-size: 10px; font-weight: 600;
-  padding: 4px 10px; border-radius: 20px;
-}
-.content-actions { padding: 12px; display: flex; gap: 10px; }
-.content-actions .watch-now-btn { flex: 1; min-width: 0; }
-.share-btn {
-  width: 48px; flex-shrink: 0;
-  background: #FFFBEB; color: #B45309;
-  border: 1.5px solid #F59E0B; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-}
-.share-btn .material-icons-round { font-size: 20px; }
-.shared-badge {
-  position: absolute; top: 12px; left: 12px; z-index: 2;
-  background: var(--primary); color: white;
-  font-size: 10px; font-weight: 700;
-  padding: 4px 10px; border-radius: 20px;
-}
-.watch-now-btn {
-  width: 100%;
-  background: var(--primary);
-  color: white; border: none;
-  padding: 13px 0; border-radius: 12px;
-  font-size: 14px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  cursor: pointer;
-}
+.content-thumb { position: relative; width: 100%; aspect-ratio: 2/3; overflow: hidden; background: #150a0f; }
+/* poori image bina kheenche dikhti hai (contain); khaali jagah usi image ke halke blur se bharti hai */
+.thumb-bg { position: absolute; inset: -24px; background-size: cover; background-position: center; filter: blur(24px) brightness(0.75) saturate(1.25); }
+.thumb-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.content-thumb::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 55%); pointer-events: none; }
 
-/* NAVBAR */
-.navbar {
-  background: white;
-  display: flex; justify-content: space-around; gap: 4px;
-  padding: 10px 8px 14px;
-  border-top: 1px solid #f0f0f0;
+.thumb-fallback {
+  display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  text-align: center; padding: 20px 20px 90px; color: #e9c9d2; font-size: 13px; font-weight: 600;
+  background: radial-gradient(circle at 50% 38%, #5a0a25 0%, #1b0510 72%); background-size: cover; background-position: center;
 }
-.nav-item {
-  flex: 1; min-width: 0;
-  display: flex; flex-direction: column; align-items: center;
-  cursor: pointer; padding: 6px 0; border-radius: 12px; gap: 3px;
+.thumb-fallback svg { width: 54px; height: 54px; color: var(--accent-2); }
+.content-thumb.no-img .thumb-fallback { display: flex; }
+.content-thumb.no-img .thumb-bg, .content-thumb.no-img .thumb-img { display: none; }
+
+.content-title-overlay { position: absolute; bottom: 48px; left: 16px; right: 16px; z-index: 2; color: #fff; font-size: 20px; font-weight: 800; line-height: 1.2; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+.content-tags { position: absolute; bottom: 16px; left: 16px; right: 16px; display: flex; flex-wrap: wrap; gap: 6px; z-index: 2; }
+.content-tag { background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.14); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 11px; border-radius: 20px; }
+.shared-badge { position: absolute; top: 14px; left: 14px; z-index: 2; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 20px; box-shadow: 0 4px 12px rgba(232,41,79,0.4); }
+
+.content-actions { padding: 14px; display: flex; gap: 10px; }
+.watch-now-btn {
+  flex: 1; min-width: 0; height: 48px; border: none; border-radius: 18px; background: var(--accent); color: #fff;
+  font-family: inherit; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+  box-shadow: 0 8px 20px rgba(232,41,79,0.32);
 }
-.nav-item .material-icons-round { font-size: 24px; color: #9CA3AF; }
-.nav-label { font-size: 11px; color: #9CA3AF; font-weight: 500; }
-.nav-item.active { background: #FFFBEB; }
-.nav-item.active .material-icons-round, .nav-item.active .nav-label { color: var(--primary); }
-/* LOADING */
-.spinner {
-  width: 38px; height: 38px; margin: 0 auto;
-  border: 4px solid #FDE68A; border-top-color: var(--primary);
-  border-radius: 50%; animation: spin 0.9s linear infinite;
+.watch-now-btn svg { width: 20px; height: 20px; }
+.share-btn {
+  width: 48px; height: 48px; flex-shrink: 0; border-radius: 18px; background: #1a1316; border: 1px solid var(--line);
+  color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
+.share-btn svg { width: 20px; height: 20px; }
+
+/* loading */
+.spinner { width: 38px; height: 38px; margin: 0 auto; border: 4px solid rgba(255,255,255,0.12); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+#loadingBox { display: none; text-align: center; padding: 44px 20px; }
+#loadingText { font-size: 14px; font-weight: 700; color: #ffe3e8; margin-top: 16px; }
+#loadingHint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+#retryBtn { display: none; margin-top: 14px; background: var(--accent); color: #fff; border: none; padding: 11px 24px; border-radius: 20px; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+#emptyState { display: none; text-align: center; padding: 40px; color: var(--muted); }
+
 </style>
 </head>
-<body>
+<body data-page="content">
 
-<div class="topbar">
-  <div class="back-btn" style="display:none" onclick="window.location.href='index.html'">
-    <span class="material-icons-round">arrow_back</span>
-  </div>
-  <div class="logo">
-    <svg class="logo-icon" viewBox="0 0 40 40" fill="none">
-      <circle cx="20" cy="20" r="20" fill="#F59E0B"/>
-      <path d="M20 12 L28 20 L20 28 L12 20 Z" fill="white"/>
-    </svg>
-    <div class="logo-text">
-      <div class="top">EXCLU<span>SIVE</span></div>
-      <div class="bottom">ZONE</div>
-    </div>
-  </div>
-</div>
+<div class="page">
+  <div class="page-title">Content</div>
 
-<div class="scroll-area">
   <div class="search-tap">
-    <span class="material-icons-round">search</span>
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
     <input type="text" id="searchInput" placeholder="Search exclusive content...">
   </div>
 
@@ -221,44 +209,180 @@ body {
   </div>
 
   <div class="exclusive-banner">
-    <span class="material-icons-round">workspace_premium</span>
+    <div class="banner-ico"><svg viewBox="0 0 24 24"><path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg></div>
     <div class="exclusive-banner-text">
       <h2>Exclusive Unlocked</h2>
       <p>This content is available only here</p>
     </div>
   </div>
 
-  <div id="loadingBox" style="display:none; text-align:center; padding:44px 20px;">
+  <div id="loadingBox">
     <div id="spinner" class="spinner"></div>
-    <div id="loadingText" style="font-size:14px; font-weight:700; color:#92400E; margin-top:16px;"></div>
-    <div id="loadingHint" style="font-size:12px; color:#9CA3AF; margin-top:6px;">The server is waking up, please wait a moment 🙏</div>
-    <button id="retryBtn" style="display:none; margin-top:14px; background:var(--primary); color:white; border:none; padding:10px 22px; border-radius:20px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer;">Try again</button>
+    <div id="loadingText"></div>
+    <div id="loadingHint">The server is waking up, please wait a moment 🙏</div>
+    <button id="retryBtn">Try again</button>
   </div>
 
   <div class="content-grid" id="contentGrid"></div>
-  <div class="empty-state" id="emptyState" style="display:none; text-align:center; padding:40px; color:#9CA3AF;">Nothing here yet.</div>
+  <div class="empty-state" id="emptyState">Nothing here yet.</div>
 </div>
 
-<div class="navbar">
-  <div class="nav-item active">
-    <span class="material-icons-round">workspace_premium</span>
-    <span class="nav-label">Exclusive</span>
-  </div>
-  <div class="nav-item" onclick="window.location.href='store.html'">
-    <span class="material-icons-round">storefront</span>
-    <span class="nav-label">Store</span>
-  </div>
-  <div class="nav-item" onclick="window.location.href='games.html'">
-    <span class="material-icons-round">sports_esports</span>
-    <span class="nav-label">Games</span>
-  </div>
-  <div class="nav-item" onclick="window.location.href='tasks.html'">
-    <span class="material-icons-round">account_balance_wallet</span>
-    <span class="nav-label">Earn</span>
-  </div>
-</div>
+<div class="app-nav" id="appNav"></div>
 
 <script>
+/* =====================================================================
+   app.js — shared by all pages (navigation, API, wallet, toast, history)
+   Sab kuch window.App ke andar hai, taaki pages ke apne variables se
+   (jaise `tg`) kuch na takraye.
+   ===================================================================== */
+(function () {
+  'use strict';
+
+  const API_BASE = 'https://animezone-bot.onrender.com';
+  const tg = (window.Telegram && window.Telegram.WebApp) || null;
+
+  if (tg) {
+    try { tg.ready(); tg.expand(); } catch (e) {}
+    try { tg.setHeaderColor('#36000f'); } catch (e) {}
+    try { tg.setBackgroundColor('#0b0005'); } catch (e) {}
+    try { tg.setBottomBarColor('#2f000e'); } catch (e) {}
+  }
+
+  /* ---------- icons ---------- */
+  const ICONS = {
+    home: '<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+    games: '<svg viewBox="0 0 24 24"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg>',
+    store: '<svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+    content: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/></svg>',
+    profile: '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  };
+  const PAGES = [
+    { id: 'home', href: 'index.html', label: 'Home' },
+    { id: 'games', href: 'games.html', label: 'Games' },
+    { id: 'store', href: 'store.html', label: 'Store' },
+    { id: 'content', href: 'exclusive.html', label: 'Content' },
+    { id: 'profile', href: 'profile.html', label: 'Profile' },
+  ];
+
+  const COIN_SVG = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#F59E0B"/><circle cx="12" cy="12" r="8.2" fill="#FCD34D" stroke="#D97706" stroke-width="1"/><polygon points="12 7 13.5 10.4 17 10.8 14.4 13.2 15.1 16.7 12 14.9 8.9 16.7 9.6 13.2 7 10.8 10.5 10.4" fill="#B45309"/></svg>';
+  const PLAY_SVG = '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>';
+
+  /* ---------- navigation ---------- */
+  function go(href) { window.location.href = href; }
+
+  function mountNav() {
+    const el = document.getElementById('appNav');
+    if (!el) return;
+    const current = document.body.getAttribute('data-page');
+    el.innerHTML = PAGES.map((p) =>
+      `<button class="nav-btn ${p.id === current ? 'active' : ''}" data-href="${p.href}" aria-label="${p.label}">${ICONS[p.id]}<span>${p.label}</span></button>`
+    ).join('');
+    el.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-href]');
+      if (!b || b.classList.contains('active')) return;
+      go(b.getAttribute('data-href'));
+    });
+  }
+
+  /* ---------- API (Telegram login header ke saath) ---------- */
+  async function api(path, opts) {
+    opts = opts || {};
+    const res = await fetch(API_BASE + path, {
+      method: opts.method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': (tg && tg.initData) || '',
+      },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    let data = null;
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) {
+      const err = new Error((data && (data.message || data.error)) || ('HTTP ' + res.status));
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
+
+  /* ---------- wallet ---------- */
+  const WALLET_KEY = 'wallet_v1';
+  let wallet = null;
+  try { wallet = JSON.parse(localStorage.getItem(WALLET_KEY) || 'null'); } catch (e) {}
+
+  function setWallet(w) {
+    wallet = w;
+    try { localStorage.setItem(WALLET_KEY, JSON.stringify(w)); } catch (e) {}
+    document.dispatchEvent(new CustomEvent('wallet', { detail: w }));
+  }
+  async function loadWallet() {
+    const w = await api('/api/wallet');
+    setWallet(w);
+    return w;
+  }
+  const getWallet = () => wallet;
+  const fmt = (n) => Number(n || 0).toLocaleString('en-IN');
+
+  /* ---------- toast ---------- */
+  let toastTimer = null;
+  function toast(msg) {
+    let t = document.getElementById('appToast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'appToast';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  /* ---------- history sheet ---------- */
+  function closeHistory() {
+    const b = document.getElementById('hsBackdrop');
+    if (b) b.remove();
+  }
+
+  function historyHTML(list) {
+    if (!list || !list.length) return '<div class="hs-empty">No transactions yet</div>';
+    return list.map((h) => {
+      const label = h.type === 'ad' ? 'Ad reward' : 'Reward';
+      let when = '';
+      try { when = new Date(h.at).toLocaleString([], { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+      const amt = Number(h.amount) || 0;
+      return `<div class="hs-item">
+        <div class="hs-ico">${PLAY_SVG}</div>
+        <div class="hs-info"><div class="hs-label">${label}</div><div class="hs-date">${when}</div></div>
+        <div class="hs-amt">${amt >= 0 ? '+' : ''}${fmt(amt)} <span class="coin">${COIN_SVG}</span></div>
+      </div>`;
+    }).join('');
+  }
+
+  async function openHistory() {
+    closeHistory();
+    const b = document.createElement('div');
+    b.id = 'hsBackdrop';
+    b.className = 'hs-backdrop';
+    b.innerHTML = '<div class="hs-sheet"><div class="hs-handle"></div><h3>History</h3><div id="hsList"><div class="hs-empty">Loading…</div></div></div>';
+    b.addEventListener('click', (e) => { if (e.target === b) closeHistory(); });
+    document.body.appendChild(b);
+    const show = (list) => { const el = document.getElementById('hsList'); if (el) el.innerHTML = historyHTML(list); };
+    if (wallet && wallet.history) show(wallet.history);
+    try { const w = await loadWallet(); show(w.history); }
+    catch (e) { if (!(wallet && wallet.history)) show([]); }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountNav);
+  else mountNav();
+
+  window.App = { API_BASE, tg, api, go, toast, fmt, loadWallet, getWallet, setWallet, openHistory, coinSVG: () => COIN_SVG, icons: ICONS };
+})();
+
+</script>
+<script>
+
 window.Telegram.WebApp.ready();
 window.Telegram.WebApp.expand();
 const tg = window.Telegram.WebApp;
@@ -399,6 +523,41 @@ async function loadExclusive() {
   }
 }
 
+// ---------- IMAGE HELPERS ----------
+// Agar post ki image load na ho ya mile hi na, to card par saaf "Preview not available yet" dikhta hai.
+// Apni default image dikhani ho to yahan https link daal do (khaali chhodo to designed placeholder dikhega).
+const FALLBACK_IMAGE = '';
+
+const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>';
+const ICON_SHARE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>';
+const ICON_NOIMG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.6"/><path d="m21 15-5-5L5 21"/><path d="M3 3l18 18"/></svg>';
+
+// CSS url() ke liye safe link (sirf http/https/data:image)
+function safeImg(url) {
+  const u = String(url || '').trim();
+  if (!(/^https?:\/\//i.test(u) || /^data:image\//i.test(u))) return '';
+  const map = { "'": '%27', '"': '%22', '(': '%28', ')': '%29', '\\': '%5C', '<': '%3C', '>': '%3E', ' ': '%20', '\n': '%0A', '\r': '%0D' };
+  return u.replace(/['"()\\<> \n\r]/g, (c) => map[c]);
+}
+
+// Thumbnail hai hi nahi (ya backend ne placeholder diya)
+function isMissingThumb(u) {
+  const s = String(u || '').trim();
+  if (!s || s === '#' || /via\.placeholder\.com/i.test(s)) return true;
+  return !(/^https?:\/\//i.test(s) || /^data:image\//i.test(s));
+}
+
+// Image load fail hui to fallback dikhao
+function thumbFail(img) {
+  const t = img.closest('.content-thumb');
+  if (t) t.classList.add('no-img');
+}
+
+function fallbackHTML() {
+  const custom = safeImg(FALLBACK_IMAGE);
+  return `<div class="thumb-fallback"${custom ? ` style="background-image:url('${custom}')"` : ''}>${ICON_NOIMG}<span>Preview not available yet</span></div>`;
+}
+
 function renderGrid() {
   const grid = document.getElementById('contentGrid');
   const empty = document.getElementById('emptyState');
@@ -439,10 +598,15 @@ function renderGrid() {
   }
   empty.style.display = 'none';
 
-  grid.innerHTML = filtered.map((item) => `
+  grid.innerHTML = filtered.map((item) => {
+    const missing = isMissingThumb(item.thumbnail);
+    const bg = missing ? '' : safeImg(item.thumbnail);
+    return `
     <div class="content-card">
-      <div class="content-thumb">
-        <img src="${esc(item.thumbnail)}" alt="${esc(item.title)}">
+      <div class="content-thumb ${missing ? 'no-img' : ''}">
+        ${missing ? '' : `<div class="thumb-bg" style="background-image:url('${bg}')"></div>
+        <img class="thumb-img" src="${esc(item.thumbnail)}" alt="${esc(item.title)}" onerror="thumbFail(this)">`}
+        ${fallbackHTML()}
         ${sharedId && item.id === sharedId ? '<div class="shared-badge">📩 Shared with you</div>' : ''}
         <div class="content-title-overlay">${esc(item.title)}</div>
         <div class="content-tags">
@@ -453,12 +617,12 @@ function renderGrid() {
       </div>
       <div class="content-actions">
         <button class="watch-now-btn" onclick="openExclusiveContent('${item.deeplink}')">
-          <span class="material-icons-round">play_arrow</span> Watch Now
+          ${ICON_PLAY} Watch Now
         </button>
-        ${item.shareLink ? `<button class="share-btn" aria-label="Share" onclick="shareContent('${esc(item.id)}')"><span class="material-icons-round">share</span></button>` : ''}
+        ${item.shareLink ? `<button class="share-btn" aria-label="Share" onclick="shareContent('${esc(item.id)}')">${ICON_SHARE}</button>` : ''}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 // ---------- SHARE ----------
@@ -514,6 +678,7 @@ document.getElementById('filterRow').addEventListener('click', (e) => {
 document.getElementById('searchInput').addEventListener('input', renderGrid);
 
 loadExclusive();
+
 </script>
 </body>
 </html>
