@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>html,body{background:#19000a}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>AnimeZone - Home</title>
+<!-- Friend ke share link (?c=x001) seedha Content page par jaye -->
+<script>
+if (new URLSearchParams(window.location.search).get('c')) {
+  window.location.replace('exclusive.html' + window.location.search + window.location.hash);
+}
+</script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   THEME — dark crimson (shared by all pages)
+   Pages: index.html (Home), games.html, store.html, exclusive.html
+   (Content), profile.html
+   ===================================================================== */
+:root {
+  --accent: #E8294F;
+  --accent-2: #F0476A;
+  --gold: #FBBF24;
+  --text: #ffffff;
+  --muted: #a99ca2;
+  --line: rgba(255, 255, 255, 0.10);
+  --panel: rgba(9, 3, 7, 0.88);
+  --page-bg: linear-gradient(180deg, #36000f 0%, #19000a 36%, #0b0005 62%, #2f000e 100%);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+  background: var(--page-bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+button { font-family: inherit; }
+
+/* ---------- page layout ---------- */
+.page { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 16px 120px; }
+.page::-webkit-scrollbar { display: none; }
+.page-title { font-size: 34px; font-weight: 800; letter-spacing: -1px; padding: 22px 4px 18px; }
+.section-title { font-size: 22px; font-weight: 800; padding: 26px 4px 6px; }
+.muted { color: var(--muted); }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 28px; }
+
+.coin { display: inline-flex; width: 1em; height: 1em; vertical-align: -0.12em; }
+.coin svg { width: 100%; height: 100%; }
+
+/* ---------- buttons ---------- */
+.btn-row { display: flex; gap: 12px; }
+.btn {
+  flex: 1; height: 54px; border: none; border-radius: 20px;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  font-size: 17px; font-weight: 700; color: #fff; cursor: pointer;
+}
+.btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.btn.primary { background: var(--accent); box-shadow: 0 8px 22px rgba(232, 41, 79, 0.35); }
+.btn.dark { background: #1a1316; border: 1px solid var(--line); }
+
+/* ---------- floating bottom navigation ---------- */
+.app-nav {
+  position: fixed; left: 14px; right: 14px; bottom: 14px; height: 74px; z-index: 40;
+  display: flex; align-items: center; gap: 2px; padding: 7px;
+  background: rgba(20, 14, 18, 0.94); border: 1px solid var(--line); border-radius: 34px;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+.nav-btn {
+  flex: 1; min-width: 0; height: 100%; border: none; background: none; border-radius: 27px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  color: #b9acb2; font-size: 11.5px; font-weight: 500; cursor: pointer;
+}
+.nav-btn svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nav-btn.active { background: #2a2327; color: var(--accent-2); }
+
+/* ---------- toast ---------- */
+#appToast {
+  position: fixed; left: 50%; bottom: 106px; transform: translateX(-50%);
+  background: rgba(30, 20, 26, 0.96); border: 1px solid var(--line); color: #fff;
+  font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px;
+  z-index: 90; max-width: 86%; text-align: center; display: none;
+}
+#appToast.show { display: block; }
+
+/* ---------- history sheet (shared) ---------- */
+.hs-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); display: flex; align-items: flex-end; z-index: 80; }
+.hs-sheet {
+  width: 100%; max-height: 80vh; overflow-y: auto; background: #120a0e;
+  border-radius: 28px 28px 0 0; border-top: 1px solid var(--line); padding: 10px 18px 28px;
+  animation: hsUp 0.25s ease;
+}
+@keyframes hsUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.hs-handle { width: 44px; height: 4px; border-radius: 4px; background: rgba(255, 255, 255, 0.2); margin: 4px auto 14px; }
+.hs-sheet h3 { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
+.hs-empty { text-align: center; color: var(--muted); font-size: 14px; padding: 36px 10px; }
+.hs-item { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+.hs-item:first-of-type { border-top: none; }
+.hs-ico { width: 44px; height: 44px; border-radius: 50%; background: rgba(232, 41, 79, 0.16); color: var(--accent-2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.hs-ico svg { width: 20px; height: 20px; fill: currentColor; }
+.hs-info { flex: 1; min-width: 0; }
+.hs-label { font-size: 15px; font-weight: 700; }
+.hs-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.hs-amt { font-size: 16px; font-weight: 800; color: var(--gold); white-space: nowrap; }
+
+</style>
+
+<!-- Monetag SDK -->
+<script src='//libtl.com/sdk.js' data-zone='11482366' data-sdk='show_11482366'></script>
+
+<style>
+.balance-card { padding: 26px 20px 20px; text-align: center; }
+.balance-card .label { font-size: 16px; }
+.balance-card .amount { font-size: 48px; font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; margin: 6px 0 2px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.balance-card .amount .coin { font-size: 36px; }
+.balance-card .btn { height: 48px; font-size: 16px; border-radius: 18px; }
+.balance-card .btn svg { width: 20px; height: 20px; }
+.balance-card .sub { font-size: 15px; margin-bottom: 20px; }
+
+.ad-card { margin-top: 16px; padding: 14px 18px 14px 14px; display: flex; align-items: center; gap: 14px; cursor: pointer; }
+.ad-card.disabled { opacity: 0.55; cursor: default; }
+.ad-icon {
+  width: 48px; height: 48px; border-radius: 50%; background: var(--accent); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; color: #fff;
+  box-shadow: 0 6px 18px rgba(232, 41, 79, 0.4);
+}
+.ad-icon svg { width: 20px; height: 20px; fill: currentColor; margin-left: 3px; }
+.ad-icon.loading svg { display: none; }
+.ad-icon.loading::after {
+  content: ''; width: 20px; height: 20px; border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.35); border-top-color: #fff; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.ad-text { flex: 1; min-width: 0; }
+.ad-title { font-size: 19px; font-weight: 700; }
+.ad-sub { font-size: 14px; margin-top: 3px; }
+.ad-reward { font-size: 19px; font-weight: 800; color: var(--gold); white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+
+.empty-block { text-align: center; padding: 30px 20px 10px; }
+.empty-block svg { width: 150px; height: 112px; }
+.empty-block h3 { font-size: 22px; font-weight: 800; margin-top: 14px; }
+.empty-block p { font-size: 15px; color: var(--muted); line-height: 1.5; margin-top: 8px; }
+</style>
+</head>
+<body data-page="home">
+
+<div class="page">
+  <div class="panel balance-card">
+    <div class="label muted">Balance</div>
+    <div class="amount"><span id="balAmount">0</span><span class="coin"></span></div>
+    <div class="sub muted">Available to spend</div>
+    <div class="btn-row">
+      <button class="btn primary" onclick="App.go('store.html')">
+        <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        Store
+      </button>
+      <button class="btn dark" onclick="App.openHistory()">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        History
+      </button>
+    </div>
+  </div>
+
+  <div class="panel ad-card" id="adCard">
+    <div class="ad-icon" id="adIcon"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg></div>
+    <div class="ad-text">
+      <div class="ad-title">Watch an ad</div>
+      <div class="ad-sub muted" id="adSub">Earn coins instantly</div>
+    </div>
+    <div class="ad-reward"><span id="adReward">+10</span><span class="coin"></span></div>
+  </div>
+
+  <div class="section-title">Tasks</div>
+  <div class="empty-block">
+    <svg viewBox="0 0 160 120" fill="none">
+      <ellipse cx="86" cy="104" rx="46" ry="9" fill="rgba(0,0,0,0.35)"/>
+      <path d="M42 94C30 54 68 22 100 30c30 8 40 44 24 64z" fill="#F5226F"/>
+      <path d="M62 44c8-9 22-12 33-9" stroke="#FF9DBB" stroke-width="5" stroke-linecap="round"/>
+      <path d="M82 66q8 8 16 0" stroke="#7A0A30" stroke-width="3.2" stroke-linecap="round"/>
+      <text x="26" y="34" font-size="20" font-weight="800" fill="#25C2B8" font-family="Inter, sans-serif">z</text>
+      <text x="42" y="20" font-size="15" font-weight="800" fill="#25C2B8" font-family="Inter, sans-serif">z</text>
+    </svg>
+    <h3>No new tasks yet</h3>
+    <p>Check back a bit later: new tasks come up regularly.</p>
+  </div>
+</div>
+
+<div class="app-nav" id="appNav"></div>
+
+<script>
+/* =====================================================================
+   app.js — shared by all pages (navigation, API, wallet, toast, history)
+   Sab kuch window.App ke andar hai, taaki pages ke apne variables se
+   (jaise `tg`) kuch na takraye.
+   ===================================================================== */
+(function () {
+  'use strict';
+
+  const API_BASE = 'https://animezone-bot.onrender.com';
+  const tg = (window.Telegram && window.Telegram.WebApp) || null;
+
+  if (tg) {
+    try { tg.ready(); tg.expand(); } catch (e) {}
+    try { tg.setHeaderColor('#36000f'); } catch (e) {}
+    try { tg.setBackgroundColor('#0b0005'); } catch (e) {}
+    try { tg.setBottomBarColor('#2f000e'); } catch (e) {}
+  }
+
+  /* ---------- icons ---------- */
+  const ICONS = {
+    home: '<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+    games: '<svg viewBox="0 0 24 24"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg>',
+    store: '<svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+    content: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/></svg>',
+    profile: '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  };
+  const PAGES = [
+    { id: 'home', href: 'index.html', label: 'Home' },
+    { id: 'games', href: 'games.html', label: 'Games' },
+    { id: 'store', href: 'store.html', label: 'Store' },
+    { id: 'content', href: 'exclusive.html', label: 'Content' },
+    { id: 'profile', href: 'profile.html', label: 'Profile' },
+  ];
+
+  const COIN_SVG = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#F59E0B"/><circle cx="12" cy="12" r="8.2" fill="#FCD34D" stroke="#D97706" stroke-width="1"/><polygon points="12 7 13.5 10.4 17 10.8 14.4 13.2 15.1 16.7 12 14.9 8.9 16.7 9.6 13.2 7 10.8 10.5 10.4" fill="#B45309"/></svg>';
+  const PLAY_SVG = '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>';
+
+  /* ---------- navigation ---------- */
+  function go(href) { window.location.href = href; }
+
+  function mountNav() {
+    const el = document.getElementById('appNav');
+    if (!el) return;
+    const current = document.body.getAttribute('data-page');
+    el.innerHTML = PAGES.map((p) =>
+      `<button class="nav-btn ${p.id === current ? 'active' : ''}" data-href="${p.href}" aria-label="${p.label}">${ICONS[p.id]}<span>${p.label}</span></button>`
+    ).join('');
+    el.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-href]');
+      if (!b || b.classList.contains('active')) return;
+      go(b.getAttribute('data-href'));
+    });
+  }
+
+  /* ---------- API (Telegram login header ke saath) ---------- */
+  async function api(path, opts) {
+    opts = opts || {};
+    const res = await fetch(API_BASE + path, {
+      method: opts.method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': (tg && tg.initData) || '',
+      },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    let data = null;
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) {
+      const err = new Error((data && (data.message || data.error)) || ('HTTP ' + res.status));
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
+
+  /* ---------- wallet ---------- */
+  const WALLET_KEY = 'wallet_v1';
+  let wallet = null;
+  try { wallet = JSON.parse(localStorage.getItem(WALLET_KEY) || 'null'); } catch (e) {}
+
+  function setWallet(w) {
+    wallet = w;
+    try { localStorage.setItem(WALLET_KEY, JSON.stringify(w)); } catch (e) {}
+    document.dispatchEvent(new CustomEvent('wallet', { detail: w }));
+  }
+  async function loadWallet() {
+    const w = await api('/api/wallet');
+    setWallet(w);
+    return w;
+  }
+  const getWallet = () => wallet;
+  const fmt = (n) => Number(n || 0).toLocaleString('en-IN');
+
+  /* ---------- toast ---------- */
+  let toastTimer = null;
+  function toast(msg) {
+    let t = document.getElementById('appToast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'appToast';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  /* ---------- history sheet ---------- */
+  function closeHistory() {
+    const b = document.getElementById('hsBackdrop');
+    if (b) b.remove();
+  }
+
+  function historyHTML(list) {
+    if (!list || !list.length) return '<div class="hs-empty">No transactions yet</div>';
+    return list.map((h) => {
+      const label = h.type === 'ad' ? 'Ad reward' : 'Reward';
+      let when = '';
+      try { when = new Date(h.at).toLocaleString([], { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+      const amt = Number(h.amount) || 0;
+      return `<div class="hs-item">
+        <div class="hs-ico">${PLAY_SVG}</div>
+        <div class="hs-info"><div class="hs-label">${label}</div><div class="hs-date">${when}</div></div>
+        <div class="hs-amt">${amt >= 0 ? '+' : ''}${fmt(amt)} <span class="coin">${COIN_SVG}</span></div>
+      </div>`;
+    }).join('');
+  }
+
+  async function openHistory() {
+    closeHistory();
+    const b = document.createElement('div');
+    b.id = 'hsBackdrop';
+    b.className = 'hs-backdrop';
+    b.innerHTML = '<div class="hs-sheet"><div class="hs-handle"></div><h3>History</h3><div id="hsList"><div class="hs-empty">Loading…</div></div></div>';
+    b.addEventListener('click', (e) => { if (e.target === b) closeHistory(); });
+    document.body.appendChild(b);
+    const show = (list) => { const el = document.getElementById('hsList'); if (el) el.innerHTML = historyHTML(list); };
+    if (wallet && wallet.history) show(wallet.history);
+    try { const w = await loadWallet(); show(w.history); }
+    catch (e) { if (!(wallet && wallet.history)) show([]); }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountNav);
+  else mountNav();
+
+  window.App = { API_BASE, tg, api, go, toast, fmt, loadWallet, getWallet, setWallet, openHistory, coinSVG: () => COIN_SVG, icons: ICONS };
+})();
+
+</script>
+<script>
+document.querySelectorAll('.coin').forEach((el) => { el.innerHTML = App.coinSVG(); });
+
+const balEl = document.getElementById('balAmount');
+const rewardEl = document.getElementById('adReward');
+const adCard = document.getElementById('adCard');
+const adIcon = document.getElementById('adIcon');
+const adSub = document.getElementById('adSub');
+
+let busy = false;
+let cooldownEnd = 0;
+let adsLeft = null;
+
+// DNS DETECTION (Fetch Method)
+async function isAdBlockActive() {
+    if (typeof window.show_11482366 !== 'function') return true;
+    try {
+        await fetch('https://libtl.com/sdk.js', { mode: 'no-cors', cache: 'no-store' });
+        return false;
+    } catch (e) { return true; }
+}
+
+function applyWallet(w) {
+  if (!w) return;
+  balEl.textContent = App.fmt(w.balance);
+  rewardEl.textContent = '+' + w.adReward;
+  adsLeft = w.adsLeft;
+  cooldownEnd = Date.now() + (w.nextAdIn || 0) * 1000;
+  renderAd();
+}
+
+function setBusy(on, text) {
+  busy = on;
+  adIcon.classList.toggle('loading', on);
+  if (on) { adSub.textContent = text; adCard.classList.add('disabled'); }
+  else renderAd();
+}
+
+function renderAd() {
+  if (busy) return;
+  const left = Math.max(0, Math.ceil((cooldownEnd - Date.now()) / 1000));
+  if (adsLeft === 0) {
+    adSub.textContent = 'Daily limit reached. Come back tomorrow';
+    adCard.classList.add('disabled');
+  } else if (left > 0) {
+    adSub.textContent = 'Next ad in ' + left + 's';
+    adCard.classList.add('disabled');
+  } else {
+    adSub.textContent = 'Earn coins instantly';
+    adCard.classList.remove('disabled');
+  }
+}
+setInterval(renderAd, 1000);
+
+async function watchAd() {
+  if (busy || adCard.classList.contains('disabled')) return;
+  setBusy(true, 'Preparing the ad…');
+  try {
+    const blocked = await isAdBlockActive();
+    if (blocked) {
+      alert("⚠️ DNS / Ad-Blocker Detected!\n\nPlease disable Private DNS (AdGuard) or Ad-blocker to watch ads and earn coins.");
+      return;
+    }
+
+    let start;
+    try {
+      start = await App.api('/api/ad/start', { method: 'POST' });
+    } catch (e) {
+      if (e.status === 401) App.toast('Please open this app from the Telegram bot');
+      else if (e.status === 404 || e.status >= 500 || !e.status) App.toast('Rewards are not available right now. Please try again later');
+      else if (e.data && e.data.nextAdIn) { cooldownEnd = Date.now() + e.data.nextAdIn * 1000; App.toast(e.message); }
+      else App.toast(e.message || 'Please try again in a moment');
+      return;
+    }
+
+    let watched = false;
+    try { await window.show_11482366(); watched = true; } catch (e) { watched = false; }
+    if (!watched) { App.toast('Ad was not completed, so no reward this time'); return; }
+
+    setBusy(true, 'Crediting the reward…');
+    try {
+      const res = await App.api('/api/ad/claim', { method: 'POST', body: { token: start.token } });
+      App.setWallet(res);
+      App.toast('+' + res.reward + ' coins added');
+    } catch (e) {
+      App.toast(e.message || 'Could not credit the reward. Please try again');
+    }
+  } finally {
+    setBusy(false);
+  }
+}
+adCard.addEventListener('click', watchAd);
+
+// Pehle cached balance, phir server se taaza
+applyWallet(App.getWallet());
+document.addEventListener('wallet', (e) => applyWallet(e.detail));
+App.loadWallet().catch(() => {});
+</script>
+</body>
+  </html>
+                          
