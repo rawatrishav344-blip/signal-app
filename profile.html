@@ -2,189 +2,516 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<style>html,body{background:#19000a}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>AnimeZone - Profile</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-:root { --primary: #7C3AED; }
+<link rel="prefetch" href="home.html">
+<link rel="prefetch" href="games.html">
+<link rel="prefetch" href="store.html">
+<link rel="prefetch" href="exclusive.html">
 
+<style>
+/* =====================================================================
+   THEME — dark crimson (shared by all pages)
+   Pages: index.html (Home), games.html, store.html, exclusive.html
+   (Content), profile.html
+   ===================================================================== */
+:root {
+  --accent: #E8294F;
+  --accent-2: #F0476A;
+  --gold: #FBBF24;
+  --text: #ffffff;
+  --muted: #a99ca2;
+  --line: rgba(255, 255, 255, 0.10);
+  --panel: rgba(9, 3, 7, 0.88);
+  --page-bg: linear-gradient(180deg, #36000f 0%, #19000a 36%, #0b0005 62%, #2f000e 100%);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+html, body { height: 100%; }
 body {
-  font-family: 'Inter', sans-serif;
-  background: #ffffff;
-  color: #1a1a2e;
+  font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+  background: var(--page-bg);
+  color: var(--text);
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
+button { font-family: inherit; }
 
-.topbar {
-  display: flex;
-  align-items: center;
-  padding: 14px 16px 10px;
-  background: #ffffff;
+/* ---------- page layout ---------- */
+.page {
+  flex: 1; min-height: 0; overflow-y: auto;
+  /* Telegram fullscreen mode mein upar Close button / neeche system bar ke liye jagah (app.js --safe-top / --safe-bottom set karta hai) */
+  padding: calc(var(--safe-top, 0px) + 8px) 16px calc(120px + var(--safe-bottom, 0px));
+  animation: pageIn 0.28s ease backwards;
 }
-.page-title { font-size: 19px; font-weight: 800; }
+@keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+body.leaving .page { opacity: 0; transform: translateY(-8px); transition: opacity 0.14s ease, transform 0.14s ease; }
+.page::-webkit-scrollbar { display: none; }
+.page-title { font-size: 34px; font-weight: 800; letter-spacing: -1px; padding: 22px 4px 18px; }
+.section-title { font-size: 22px; font-weight: 800; padding: 26px 4px 6px; }
+.muted { color: var(--muted); }
 
-.navbar {
-  background: white;
-  display: flex; justify-content: space-around;
-  padding: 10px 0 14px;
-  border-top: 1px solid #f0f0f0;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-}
-.nav-item {
-  display: flex; flex-direction: column; align-items: center;
-  cursor: pointer; padding: 6px 20px; border-radius: 12px;
-  transition: all 0.2s; gap: 3px;
-}
-.nav-item .material-icons-round { font-size: 24px; color: #9CA3AF; }
-.nav-label { font-size: 11px; color: #9CA3AF; font-weight: 500; }
-.nav-item.active .material-icons-round { color: var(--primary); }
-.nav-item.active .nav-label { color: var(--primary); }
-.nav-item.active { background: #EDE9FE; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 28px; }
 
-.scroll-area { flex: 1; overflow-y: auto; }
-.scroll-area::-webkit-scrollbar { display: none; }
+.coin { display: inline-flex; width: 1em; height: 1em; vertical-align: -0.12em; }
+.coin svg { width: 100%; height: 100%; }
 
-.profile-hero {
-  padding: 28px 20px;
-  text-align: center;
-  background: linear-gradient(135deg, #F5F3FF, #EDE9FE);
+/* ---------- buttons ---------- */
+.btn-row { display: flex; gap: 12px; }
+.btn {
+  flex: 1; height: 54px; border: none; border-radius: 20px;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  font-size: 17px; font-weight: 700; color: #fff; cursor: pointer;
 }
-.profile-avatar {
-  width: 84px; height: 84px; border-radius: 50%;
-  background: linear-gradient(135deg, #7C3AED, #A78BFA);
+.btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.btn.primary { background: var(--accent); box-shadow: 0 8px 22px rgba(232, 41, 79, 0.35); }
+.btn.dark { background: #1a1316; border: 1px solid var(--line); }
+
+/* ---------- floating bottom navigation (sliding pill) ---------- */
+.app-nav {
+  position: fixed; left: 14px; right: 14px; bottom: calc(14px + var(--safe-bottom, 0px)); height: 74px; z-index: 40;
+  display: flex; align-items: center; padding: 7px;
+  background: rgba(20, 14, 18, 0.94); border: 1px solid var(--line); border-radius: 34px;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+/* active tab ka highlight: ek pill jo tab se tab slide karti hai */
+.nav-pill {
+  position: absolute; top: 7px; bottom: 7px; left: 7px; width: calc((100% - 14px) / 5);
+  border-radius: 27px; background: #2a2327; z-index: 0; will-change: transform;
+  transform: translateX(calc(var(--i, 0) * 100%));
+  transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.nav-btn {
+  position: relative; z-index: 1; flex: 1; min-width: 0; height: 100%; border: none; background: none; border-radius: 27px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  color: #b9acb2; font-size: 11.5px; font-weight: 500; cursor: pointer; transition: color 0.3s ease;
+}
+.nav-btn svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nav-btn.active { color: var(--accent-2); }
+
+/* ---------- toast ---------- */
+#appToast {
+  position: fixed; left: 50%; bottom: calc(106px + var(--safe-bottom, 0px)); transform: translateX(-50%);
+  background: rgba(30, 20, 26, 0.96); border: 1px solid var(--line); color: #fff;
+  font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px;
+  z-index: 90; max-width: 86%; text-align: center; display: none;
+}
+#appToast.show { display: block; }
+
+/* ---------- history sheet (shared) ---------- */
+.hs-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); display: flex; align-items: flex-end; z-index: 80; }
+.hs-sheet {
+  width: 100%; max-height: 80vh; overflow-y: auto; background: #120a0e;
+  border-radius: 28px 28px 0 0; border-top: 1px solid var(--line); padding: 10px 18px calc(28px + var(--safe-bottom, 0px));
+  animation: hsUp 0.25s ease;
+}
+@keyframes hsUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.hs-handle { width: 44px; height: 4px; border-radius: 4px; background: rgba(255, 255, 255, 0.2); margin: 4px auto 14px; }
+.hs-sheet h3 { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
+.hs-empty { text-align: center; color: var(--muted); font-size: 14px; padding: 36px 10px; }
+.hs-item { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+.hs-item:first-of-type { border-top: none; }
+.hs-ico { width: 44px; height: 44px; border-radius: 50%; background: rgba(232, 41, 79, 0.16); color: var(--accent-2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.hs-ico svg { width: 20px; height: 20px; fill: currentColor; }
+.hs-info { flex: 1; min-width: 0; }
+.hs-label { font-size: 15px; font-weight: 700; }
+.hs-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.hs-amt { font-size: 16px; font-weight: 800; color: var(--gold); white-space: nowrap; }
+
+</style>
+<style>
+.me { display: flex; align-items: center; gap: 18px; padding: 4px 4px 22px; }
+.avatar {
+  width: 78px; height: 78px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
+  background: linear-gradient(135deg, #E8294F, #7A0A30);
   display: flex; align-items: center; justify-content: center;
-  font-size: 32px; font-weight: 800; color: white;
-  margin: 0 auto 14px;
-  background-size: cover; background-position: center;
-  border: 3px solid white;
-  box-shadow: 0 4px 14px rgba(124,58,237,0.25);
+  font-size: 30px; font-weight: 800; color: #fff;
 }
-.profile-name { font-size: 18px; font-weight: 800; color: #1a1a2e; }
-.profile-username { font-size: 13px; color: #9CA3AF; margin-top: 3px; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.me-info { min-width: 0; }
+.me-name { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.me-user { font-size: 16px; color: var(--muted); margin-top: 3px; }
 
-.section-title {
-  font-size: 15px; font-weight: 700; color: #1a1a2e;
-  margin: 20px 14px 10px;
-}
+.stats { display: flex; margin-bottom: 18px; }
+.stat { flex: 1; text-align: center; padding: 22px 8px; }
+.stat + .stat { border-left: 1px solid var(--line); }
+.stat b { display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 24px; font-weight: 800; }
+.stat b .coin { font-size: 20px; }
+.stat-label { font-size: 14px; color: var(--muted); margin-top: 4px; }
 
-.channels-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 12px; padding: 0 14px 20px;
+.menu { overflow: hidden; }
+.row { display: flex; align-items: center; gap: 16px; padding: 16px; cursor: pointer; }
+.row + .row { border-top: 1px solid var(--line); }
+.row.static { cursor: default; }
+.row-ico { width: 46px; height: 46px; border-radius: 50%; background: #231b1f; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.row-ico svg { width: 21px; height: 21px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.row-label { flex: 1; font-size: 18px; font-weight: 500; }
+.row-value { font-size: 17px; color: var(--muted); }
+.chev { width: 20px; height: 20px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* promo sheet */
+.promo-input {
+  width: 100%; height: 56px; margin-top: 6px; padding: 0 18px; border-radius: 18px;
+  background: rgba(255,255,255,0.07); border: 1px solid var(--line); color: #fff;
+  font-family: inherit; font-size: 19px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
 }
-.channel-box {
-  aspect-ratio: 1/1;
-  border-radius: 14px;
-  background: #F3F4F6;
-  background-size: cover; background-position: center;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-}
-.channel-box::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%);
-}
-.channel-box-name {
-  position: absolute; bottom: 10px; left: 10px; right: 10px;
-  z-index: 2; color: white; font-size: 13px; font-weight: 700;
-}
-.empty-state { text-align: center; padding: 40px 24px; color: #9CA3AF; font-size: 13px; }
+.promo-input::placeholder { color: var(--muted); letter-spacing: 0; font-weight: 500; text-transform: none; }
+.promo-input:focus { border-color: var(--accent); }
+.promo-msg { min-height: 20px; margin: 10px 4px 0; font-size: 13px; font-weight: 600; }
+.promo-msg.err { color: #ff8fa3; }
+.promo-btn { width: 100%; flex: none; margin-top: 12px; }
+.promo-btn:disabled { opacity: 0.6; }
 </style>
 </head>
-<body>
+<body data-page="profile">
 
-<div class="topbar">
+<div class="page">
   <div class="page-title">Profile</div>
+
+  <div class="me">
+    <div class="avatar" id="avatar">?</div>
+    <div class="me-info">
+      <div class="me-name" id="meName">Guest</div>
+      <div class="me-user" id="meUser"></div>
+    </div>
+  </div>
+
+  <div class="panel stats">
+    <div class="stat"><b><span id="statBalance">0</span><span class="coin"></span></b><div class="stat-label">Coins on balance</div></div>
+    <div class="stat"><b id="statSince">—</b><div class="stat-label">Member since</div></div>
+  </div>
+
+  <div class="panel menu">
+    <div class="row" id="rowPromo">
+      <div class="row-ico"><svg viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/><path d="M13 5v2M13 17v2M13 11v2"/></svg></div>
+      <div class="row-label">Enter a promo code</div>
+      <svg class="chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>
+    </div>
+    <div class="row" id="rowHistory">
+      <div class="row-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+      <div class="row-label">Transaction history</div>
+      <svg class="chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>
+    </div>
+    <div class="row static">
+      <div class="row-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/></svg></div>
+      <div class="row-label">Language</div>
+      <div class="row-value">English</div>
+    </div>
+  </div>
 </div>
 
-<div class="scroll-area">
-  <div class="profile-hero">
-    <div class="profile-avatar" id="profileAvatar">?</div>
-    <div class="profile-name" id="profileName">—</div>
-    <div class="profile-username" id="profileUsername">—</div>
-  </div>
-
-  <div class="section-title">Channels</div>
-  <div class="channels-grid" id="channelsGrid"></div>
-  <div class="empty-state" id="emptyState" style="display:none;">Abhi koi channel add nahi hua.</div>
-</div>
-
-<div class="navbar">
-  <div class="nav-item" onclick="window.location.href='earning.html'">
-    <span class="material-icons-round">account_balance_wallet</span>
-    <span class="nav-label">Earning</span>
-  </div>
-  <div class="nav-item" onclick="window.location.href='index.html'">
-    <span class="material-icons-round">home</span>
-    <span class="nav-label">Home</span>
-  </div>
-  <div class="nav-item active">
-    <span class="material-icons-round">person</span>
-    <span class="nav-label">Profile</span>
-  </div>
-</div>
+<div class="app-nav" id="appNav"></div>
 
 <script>
-window.Telegram.WebApp.ready();
-window.Telegram.WebApp.expand();
-const tg = window.Telegram.WebApp;
+/* =====================================================================
+   app.js — shared by all pages (navigation, API, wallet, toast, history)
+   Sab kuch window.App ke andar hai, taaki pages ke apne variables se
+   (jaise `tg`) kuch na takraye.
+   ===================================================================== */
+(function () {
+  'use strict';
 
-// ⚠️ CONFIG — Termux tunnel URL yahan daalo
-const API_BASE = "https://animezone-bot.onrender.com";
+  const API_BASE = 'https://animezone-bot.onrender.com';
+  const tg = (window.Telegram && window.Telegram.WebApp) || null;
 
-const user = tg.initDataUnsafe?.user;
+  if (tg) {
+    try { tg.ready(); tg.expand(); } catch (e) {}
+    try { tg.setHeaderColor('#36000f'); } catch (e) {}
+    try { tg.setBackgroundColor('#0b0005'); } catch (e) {}
+    try { tg.setBottomBarColor('#2f000e'); } catch (e) {}
+  }
 
-function fillProfile() {
-  if (!user) return;
-  const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
-  document.getElementById('profileName').textContent = fullName || 'Unknown';
-  document.getElementById('profileUsername').textContent = user.username ? '@' + user.username : 'no username';
+  /* ---------- Telegram fullscreen: upar Close button / neeche system bar ke liye jagah ---------- */
+  function applyInsets() {
+    if (!tg) return;
+    const sa = tg.safeAreaInset || {};
+    const ca = tg.contentSafeAreaInset || {};
+    let top = (sa.top || 0) + (ca.top || 0);
+    let bottom = sa.bottom || 0;
+    if (tg.isFullscreen) {               // Telegram ne value na di to bhi kuch jagah chhodo
+      if (top < 60) top = 84;
+      if (bottom < 12) bottom = 20;
+    }
+    const root = document.documentElement;
+    root.style.setProperty('--safe-top', top + 'px');
+    root.style.setProperty('--safe-bottom', bottom + 'px');
+  }
+  applyInsets();
+  if (tg && tg.onEvent) {
+    ['safeAreaChanged', 'contentSafeAreaChanged', 'fullscreenChanged'].forEach((ev) => {
+      try { tg.onEvent(ev, applyInsets); } catch (e) {}
+    });
+  }
 
-  const avatarEl = document.getElementById('profileAvatar');
-  if (user.photo_url) {
-    avatarEl.style.backgroundImage = `url(${user.photo_url})`;
-    avatarEl.textContent = '';
+  /* ---------- icons ---------- */
+  const ICONS = {
+    home: '<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+    games: '<svg viewBox="0 0 24 24"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg>',
+    store: '<svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+    content: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/></svg>',
+    profile: '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  };
+  const PAGES = [
+    { id: 'home', href: 'home.html', label: 'Home' },
+    { id: 'games', href: 'games.html', label: 'Games' },
+    { id: 'store', href: 'store.html', label: 'Store' },
+    { id: 'content', href: 'exclusive.html', label: 'Content' },
+    { id: 'profile', href: 'profile.html', label: 'Profile' },
+  ];
+
+  const COIN_SVG = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#F59E0B"/><circle cx="12" cy="12" r="8.2" fill="#FCD34D" stroke="#D97706" stroke-width="1"/><polygon points="12 7 13.5 10.4 17 10.8 14.4 13.2 15.1 16.7 12 14.9 8.9 16.7 9.6 13.2 7 10.8 10.5 10.4" fill="#B45309"/></svg>';
+  const PLAY_SVG = '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>';
+
+  /* ---------- navigation ---------- */
+  function go(href) { window.location.href = href; }
+
+  function mountNav() {
+    const el = document.getElementById('appNav');
+    if (!el || el.getAttribute('data-ready')) return;
+    el.setAttribute('data-ready', '1');
+    const current = document.body.getAttribute('data-page');
+    const cur = Math.max(0, PAGES.findIndex((p) => p.id === current));
+
+    el.innerHTML = '<div class="nav-pill"></div>' + PAGES.map((p, i) =>
+      `<button class="nav-btn ${i === cur ? 'active' : ''}" data-href="${p.href}" aria-label="${p.label}">${ICONS[p.id]}<span>${p.label}</span></button>`
+    ).join('');
+
+    const pill = el.querySelector('.nav-pill');
+    const btns = Array.prototype.slice.call(el.querySelectorAll('.nav-btn'));
+
+    // Pichle page se aaye ho to pill wahin se shuru ho kar naye tab tak slide kare
+    let from = -1;
+    try {
+      from = parseInt(sessionStorage.getItem('navFrom'), 10);
+      sessionStorage.removeItem('navFrom');
+    } catch (e) {}
+    if (from >= 0 && from < PAGES.length && from !== cur) {
+      pill.style.transition = 'none';
+      pill.style.setProperty('--i', from);
+      btns[cur].classList.remove('active');
+      btns[from].classList.add('active');
+      void pill.offsetWidth;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        pill.style.transition = '';
+        pill.style.setProperty('--i', cur);
+        btns[from].classList.remove('active');
+        btns[cur].classList.add('active');
+      }));
+    } else {
+      pill.style.setProperty('--i', cur);
+    }
+
+    let leaving = false;
+    el.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-href]');
+      if (!b || leaving || b === btns[cur]) return;
+      leaving = true;
+      try { sessionStorage.setItem('navFrom', String(cur)); } catch (err) {}
+      document.body.classList.add('leaving');          // page halka sa fade-out
+      setTimeout(() => go(b.getAttribute('data-href')), 140);
+    });
+  }
+  // Back button se wapas aao to fade-out wali halat hata do
+  window.addEventListener('pageshow', () => document.body.classList.remove('leaving'));
+
+  /* ---------- API (Telegram login header ke saath) ---------- */
+  async function api(path, opts) {
+    opts = opts || {};
+    const res = await fetch(API_BASE + path, {
+      method: opts.method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': (tg && tg.initData) || '',
+      },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    let data = null;
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) {
+      const err = new Error((data && (data.message || data.error)) || ('HTTP ' + res.status));
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
+
+  /* ---------- wallet ---------- */
+  const WALLET_KEY = 'wallet_v1';
+  let wallet = null;
+  try { wallet = JSON.parse(localStorage.getItem(WALLET_KEY) || 'null'); } catch (e) {}
+
+  function setWallet(w) {
+    wallet = w;
+    try { localStorage.setItem(WALLET_KEY, JSON.stringify(w)); } catch (e) {}
+    document.dispatchEvent(new CustomEvent('wallet', { detail: w }));
+  }
+  async function loadWallet() {
+    const w = await api('/api/wallet');
+    setWallet(w);
+    return w;
+  }
+  const getWallet = () => wallet;
+  const fmt = (n) => Number(n || 0).toLocaleString('en-IN');
+
+  /* ---------- toast ---------- */
+  let toastTimer = null;
+  function toast(msg) {
+    let t = document.getElementById('appToast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'appToast';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  /* ---------- history sheet ---------- */
+  function closeHistory() {
+    const b = document.getElementById('hsBackdrop');
+    if (b) b.remove();
+  }
+
+  function historyHTML(list) {
+    if (!list || !list.length) return '<div class="hs-empty">No transactions yet</div>';
+    return list.map((h) => {
+      const label = ({ ad: 'Ad reward', promo: 'Promo code' })[h.type] || 'Reward';
+      let when = '';
+      try { when = new Date(h.at).toLocaleString([], { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+      const amt = Number(h.amount) || 0;
+      return `<div class="hs-item">
+        <div class="hs-ico">${PLAY_SVG}</div>
+        <div class="hs-info"><div class="hs-label">${label}</div><div class="hs-date">${when}</div></div>
+        <div class="hs-amt">${amt >= 0 ? '+' : ''}${fmt(amt)} <span class="coin">${COIN_SVG}</span></div>
+      </div>`;
+    }).join('');
+  }
+
+  async function openHistory() {
+    closeHistory();
+    const b = document.createElement('div');
+    b.id = 'hsBackdrop';
+    b.className = 'hs-backdrop';
+    b.innerHTML = '<div class="hs-sheet"><div class="hs-handle"></div><h3>History</h3><div id="hsList"><div class="hs-empty">Loading…</div></div></div>';
+    b.addEventListener('click', (e) => { if (e.target === b) closeHistory(); });
+    document.body.appendChild(b);
+    const show = (list) => { const el = document.getElementById('hsList'); if (el) el.innerHTML = historyHTML(list); };
+    if (wallet && wallet.history) show(wallet.history);
+    try { const w = await loadWallet(); show(w.history); }
+    catch (e) { if (!(wallet && wallet.history)) show([]); }
+  }
+
+  // Nav turant lagao (script body ke end mein hai), taaki pehle paint se hi dikhe
+  if (document.getElementById('appNav')) mountNav();
+  else document.addEventListener('DOMContentLoaded', mountNav);
+
+  window.App = { API_BASE, tg, api, go, toast, fmt, loadWallet, getWallet, setWallet, openHistory, coinSVG: () => COIN_SVG, icons: ICONS };
+})();
+
+</script>
+<script>
+document.querySelectorAll('.coin').forEach((el) => { el.innerHTML = App.coinSVG(); });
+
+/* ---------- Telegram profile ---------- */
+(function () {
+  const u = (App.tg && App.tg.initDataUnsafe && App.tg.initDataUnsafe.user) || null;
+  if (!u) return;
+  const name = [u.first_name, u.last_name].filter(Boolean).join(' ') || 'User';
+  document.getElementById('meName').textContent = name;
+  document.getElementById('meUser').textContent = u.username ? '@' + u.username : '';
+  const av = document.getElementById('avatar');
+  if (u.photo_url && /^https:\/\//i.test(u.photo_url)) {
+    const img = document.createElement('img');
+    img.src = u.photo_url;
+    img.alt = '';
+    img.onerror = () => { av.textContent = name.charAt(0).toUpperCase(); };
+    av.textContent = '';
+    av.appendChild(img);
   } else {
-    avatarEl.textContent = (fullName[0] || '?').toUpperCase();
+    av.textContent = name.charAt(0).toUpperCase();
+  }
+})();
+
+/* ---------- balance + member since ---------- */
+function showWallet(w) {
+  if (!w) return;
+  document.getElementById('statBalance').textContent = App.fmt(w.balance);
+  if (w.joinedAt) {
+    try { document.getElementById('statSince').textContent = new Date(w.joinedAt).toLocaleDateString(); } catch (e) {}
   }
 }
+showWallet(App.getWallet());
+document.addEventListener('wallet', (e) => showWallet(e.detail));
+App.loadWallet().catch(() => {});
 
-async function loadChannels() {
+document.getElementById('rowHistory').addEventListener('click', () => App.openHistory());
+
+/* ---------- promo code ---------- */
+// Backend: POST /api/promo/redeem  { code }  ->  200 { reward, ...wallet }  |  400 { message }  |  429 { message }
+async function redeemPromo(code) {
   try {
-    const res = await fetch(`${API_BASE}/api/channels`);
-    const channels = await res.json();
-    renderChannels(channels);
-  } catch (err) {
-    console.error(err);
+    const res = await App.api('/api/promo/redeem', { method: 'POST', body: { code } });
+    return { ok: true, res };
+  } catch (e) {
+    if (e.status === 401) return { ok: false, message: 'Please open this app from the Telegram bot.' };
+    if (e.status === 400 || e.status === 429) return { ok: false, message: e.message || 'Invalid or expired code' };
+    return { ok: false, message: 'Promo codes are not available right now. Please try again later.' };   // 404 / 5xx / network
   }
 }
 
-function renderChannels(channels) {
-  const grid = document.getElementById('channelsGrid');
-  const empty = document.getElementById('emptyState');
-
-  if (channels.length === 0) {
-    grid.style.display = 'none';
-    empty.style.display = 'block';
-    return;
-  }
-
-  grid.innerHTML = channels.map((ch) => `
-    <div class="channel-box" style="background-image:url('${ch.photo || ''}')" onclick="tg.openTelegramLink('${ch.link}')">
-      <div class="channel-box-name">${ch.name}</div>
-    </div>
-  `).join('');
+function closePromo() {
+  const b = document.getElementById('promoBackdrop');
+  if (b) b.remove();
 }
 
-fillProfile();
-loadChannels();
+function openPromo() {
+  closePromo();
+  const b = document.createElement('div');
+  b.id = 'promoBackdrop';
+  b.className = 'hs-backdrop';
+  b.innerHTML =
+    '<div class="hs-sheet"><div class="hs-handle"></div><h3>Promo code</h3>' +
+    '<input id="promoInput" class="promo-input" type="text" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Enter your code">' +
+    '<div id="promoMsg" class="promo-msg"></div>' +
+    '<button id="promoBtn" class="btn primary promo-btn">Redeem</button></div>';
+  b.addEventListener('click', (e) => { if (e.target === b) closePromo(); });
+  document.body.appendChild(b);
+
+  const input = document.getElementById('promoInput');
+  const msg = document.getElementById('promoMsg');
+  const btn = document.getElementById('promoBtn');
+  let busy = false;
+
+  async function submit() {
+    if (busy) return;
+    const code = input.value.trim().toUpperCase();
+    if (!code) { msg.className = 'promo-msg err'; msg.textContent = 'Enter a code first'; return; }
+    busy = true; btn.disabled = true; btn.textContent = 'Checking…'; msg.textContent = '';
+    const r = await redeemPromo(code);
+    busy = false; btn.disabled = false; btn.textContent = 'Redeem';
+    if (r.ok) {
+      App.setWallet(r.res);
+      closePromo();
+      App.toast('+' + r.res.reward + ' coins added');
+    } else {
+      msg.className = 'promo-msg err';
+      msg.textContent = r.message;
+    }
+  }
+  btn.addEventListener('click', submit);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+  setTimeout(() => input.focus(), 150);
+}
+document.getElementById('rowPromo').addEventListener('click', openPromo);
 </script>
 </body>
 </html>
