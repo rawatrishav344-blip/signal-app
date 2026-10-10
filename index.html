@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>html,body{background:#19000a}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>AnimeZone</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="prefetch" href="home.html">
+<link rel="prefetch" href="exclusive.html">
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif; color: #fff; overflow: hidden;
+  background: linear-gradient(180deg, #36000f 0%, #19000a 36%, #0b0005 62%, #2f000e 100%);
+}
+/* Server jaldi jaag jaye to ye screen dikhti hi nahi (opacity 0 rehti hai) */
+.splash {
+  position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px; text-align: center; opacity: 0; transition: opacity 0.4s ease; pointer-events: none;
+}
+.splash.show { opacity: 1; pointer-events: auto; }
+.logo { width: 76px; height: 76px; margin-bottom: 26px; filter: drop-shadow(0 10px 26px rgba(232, 41, 79, 0.45)); animation: float 2.4s ease-in-out infinite; }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+.sub { margin-top: 8px; font-size: 14px; color: #a99ca2; line-height: 1.6; max-width: 300px; }
+
+.count-wrap { position: relative; width: 150px; height: 150px; margin: 30px 0 8px; }
+.ring { position: absolute; inset: 0; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 7; }
+.ring .bg { stroke: rgba(255, 255, 255, 0.09); }
+.ring .fg { stroke: #E8294F; stroke-linecap: round; stroke-dasharray: 427; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear; }
+.count { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.count b { font-size: 46px; font-weight: 900; letter-spacing: -1px; font-variant-numeric: tabular-nums; line-height: 1; }
+.count span { font-size: 12px; color: #a99ca2; margin-top: 4px; font-weight: 600; }
+.status { font-size: 15px; font-weight: 700; margin-top: 6px; min-height: 22px; }
+.ready .ring .fg { stroke: #34D399; stroke-dashoffset: 0 !important; }
+.ready .count b { color: #34D399; font-size: 54px; }
+.btns { display: none; gap: 12px; margin-top: 26px; }
+.btns.show { display: flex; }
+.btn { border: none; border-radius: 18px; padding: 14px 24px; font-family: inherit; font-size: 15px; font-weight: 700; color: #fff; cursor: pointer; background: #1a1316; border: 1px solid rgba(255, 255, 255, 0.1); }
+.btn.primary { background: #E8294F; border-color: transparent; box-shadow: 0 8px 22px rgba(232, 41, 79, 0.35); }
+</style>
+</head>
+<body>
+
+<div class="splash" id="splash">
+  <svg class="logo" viewBox="0 0 40 40" fill="none">
+    <circle cx="20" cy="20" r="20" fill="#E8294F"/>
+    <path d="M20 12 L28 20 L20 28 L12 20 Z" fill="white"/>
+  </svg>
+  <h1 id="title">Starting the server</h1>
+  <div class="sub" id="sub">Please wait a moment. This only happens when the server has been idle.</div>
+
+  <div class="count-wrap" id="countWrap">
+    <svg class="ring" viewBox="0 0 150 150">
+      <circle class="bg" cx="75" cy="75" r="68"/>
+      <circle class="fg" id="ringFg" cx="75" cy="75" r="68"/>
+    </svg>
+    <div class="count"><b id="num">50</b><span id="unit">seconds</span></div>
+  </div>
+  <div class="status" id="status">Waking things up…</div>
+
+  <div class="btns" id="btns">
+    <button class="btn" id="retryBtn">Try again</button>
+    <button class="btn primary" id="openBtn">Open anyway</button>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   App ka pehla page. Server (Render) so raha ho to countdown dikhata hai,
+   jaag jaye to turant Home khol deta hai. Server pehle se jaaga ho to
+   kuch dikhta hi nahi.
+   ===================================================================== */
+const API_BASE = 'https://animezone-bot.onrender.com';
+const SHOW_AFTER_MS = 1200;      // itni der mein jawab aa gaya to timer dikhana hi nahi
+const EST_SECONDS = 50;          // server jagne ka andaaza (countdown yahin se shuru)
+const GIVE_UP_MS = 150000;       // itni der baad "Open anyway" ka option
+const PING_TIMEOUT_MS = 12000;
+const RETRY_GAP_MS = 2000;
+const NOT_READY = [502, 503, 504, 520, 521, 522, 523, 524];
+
+const tg = (window.Telegram && window.Telegram.WebApp) || null;
+if (tg) {
+  try { tg.ready(); tg.expand(); } catch (e) {}
+  try { tg.setHeaderColor('#36000f'); } catch (e) {}
+  try { tg.setBackgroundColor('#0b0005'); } catch (e) {}
+  try { tg.setBottomBarColor('#2f000e'); } catch (e) {}
+}
+
+// Friend ka share link (?c=x001) seedha Content par, baaki sab Home par. Telegram ka login (#hash) saath jaata hai.
+const hasShare = !!new URLSearchParams(window.location.search).get('c');
+const TARGET = (hasShare ? 'exclusive.html' : 'home.html') + window.location.search + window.location.hash;
+
+const $ = (id) => document.getElementById(id);
+const startedAt = Date.now();
+let finished = false;
+let uiShown = false;
+let tick = null;
+
+function openTarget() {
+  if (finished) return;
+  finished = true;
+  clearInterval(tick);
+  window.location.replace(TARGET);
+}
+
+function showUi() {
+  if (finished || uiShown) return;
+  uiShown = true;
+  $('splash').classList.add('show');
+  render();
+  tick = setInterval(render, 1000);
+}
+
+// Countdown: shuru se kitne second beete, uske hisaab se bacha hua time
+function render() {
+  if (finished) return;
+  const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+  const left = Math.max(0, EST_SECONDS - elapsed);
+  $('ringFg').style.strokeDashoffset = String(427 * (1 - left / EST_SECONDS));
+  if (left > 0) {
+    $('num').textContent = String(left);
+    $('unit').textContent = left === 1 ? 'second' : 'seconds';
+    $('status').textContent = 'Waking things up…';
+  } else {
+    $('num').textContent = '…';
+    $('unit').textContent = 'almost there';
+    $('status').textContent = 'Almost ready, thanks for waiting…';
+  }
+}
+
+function showReadyThenOpen() {
+  if (finished) return;
+  if (!uiShown) { openTarget(); return; }          // server pehle se jaaga tha: bina kuch dikhaye
+  clearInterval(tick);
+  $('splash').classList.add('ready');
+  $('title').textContent = 'Server is ready';
+  $('sub').textContent = 'Opening the app…';
+  $('num').textContent = '✓';
+  $('unit').textContent = 'ready';
+  $('status').textContent = '';
+  setTimeout(openTarget, 800);
+}
+
+function showGiveUp() {
+  if (finished) return;
+  clearInterval(tick);
+  showUi();
+  $('title').textContent = 'Taking longer than usual';
+  $('sub').textContent = 'The server is still starting. You can keep waiting or open the app anyway.';
+  $('num').textContent = '…';
+  $('unit').textContent = 'still waiting';
+  $('status').textContent = '';
+  $('btns').classList.add('show');
+}
+
+// Server ne kisi bhi tarah jawab diya (404 bhi chalega) = jaag chuka hai. 502/503/504 = abhi boot ho raha hai.
+async function pingOnce() {
+  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = setTimeout(() => { if (ctrl) ctrl.abort(); }, PING_TIMEOUT_MS);
+  try {
+    const res = await fetch(API_BASE + '/api/health', { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined });
+    return NOT_READY.indexOf(res.status) === -1;
+  } catch (e) {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function waitForServer() {
+  while (!finished) {
+    if (await pingOnce()) return true;
+    if (Date.now() - startedAt > GIVE_UP_MS) return false;
+    await new Promise((r) => setTimeout(r, RETRY_GAP_MS));
+  }
+  return false;
+}
+
+async function boot() {
+  const uiTimer = setTimeout(showUi, SHOW_AFTER_MS);
+  const ok = await waitForServer();
+  clearTimeout(uiTimer);
+  if (ok) showReadyThenOpen(); else showGiveUp();
+}
+
+$('openBtn').addEventListener('click', openTarget);
+$('retryBtn').addEventListener('click', () => window.location.reload());
+boot();
+</script>
+</body>
+</html>
