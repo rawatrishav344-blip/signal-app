@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>html,body{background:#19000a}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>AnimeZone - Profile</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="prefetch" href="collections.html">
+<link rel="prefetch" href="exclusive.html">
+<link rel="prefetch" href="store.html">
+
+<style>
+
+/* =====================================================================
+   THEME — dark crimson (shared by all pages)
+   Pages: collections.html, store.html, profile.html
+   (Content), profile.html
+   ===================================================================== */
+:root {
+  --accent: #E8294F;
+  --accent-2: #F0476A;
+  --gold: #FBBF24;
+  --text: #ffffff;
+  --muted: #a99ca2;
+  --line: rgba(255, 255, 255, 0.10);
+  --panel: rgba(9, 3, 7, 0.88);
+  --page-bg: linear-gradient(180deg, #36000f 0%, #19000a 36%, #0b0005 62%, #2f000e 100%);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+  background: var(--page-bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+button { font-family: inherit; }
+
+/* ---------- page layout ---------- */
+.page {
+  flex: 1; min-height: 0; overflow-y: auto;
+  /* Telegram fullscreen mode mein upar Close button / neeche system bar ke liye jagah (app.js --safe-top / --safe-bottom set karta hai) */
+  padding: calc(var(--safe-top, 0px) + 8px) 16px calc(120px + var(--safe-bottom, 0px));
+  animation: pageIn 0.28s ease backwards;
+}
+@keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+body.leaving .page { opacity: 0; transform: translateY(-8px); transition: opacity 0.14s ease, transform 0.14s ease; }
+.page::-webkit-scrollbar { display: none; }
+.page-title { font-size: 34px; font-weight: 800; letter-spacing: -1px; padding: 22px 4px 18px; }
+.section-title { font-size: 22px; font-weight: 800; padding: 26px 4px 6px; }
+.muted { color: var(--muted); }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 28px; }
+
+
+/* ---------- buttons ---------- */
+.btn-row { display: flex; gap: 12px; }
+.btn {
+  flex: 1; height: 54px; border: none; border-radius: 20px;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  font-size: 17px; font-weight: 700; color: #fff; cursor: pointer;
+}
+.btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.btn.primary { background: var(--accent); box-shadow: 0 8px 22px rgba(232, 41, 79, 0.35); }
+.btn.dark { background: #1a1316; border: 1px solid var(--line); }
+
+/* ---------- floating bottom navigation (sliding pill) ---------- */
+.app-nav {
+  position: fixed; left: 14px; right: 14px; bottom: calc(14px + var(--safe-bottom, 0px)); height: 74px; z-index: 40;
+  display: flex; align-items: center; padding: 7px;
+  background: rgba(20, 14, 18, 0.94); border: 1px solid var(--line); border-radius: 34px;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+/* active tab ka highlight: ek pill jo tab se tab slide karti hai */
+.nav-pill {
+  position: absolute; top: 7px; bottom: 7px; left: 7px; width: calc((100% - 14px) / 4);
+  border-radius: 27px; background: #2a2327; z-index: 0; will-change: transform;
+  transform: translateX(calc(var(--i, 0) * 100%));
+  transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.nav-btn {
+  position: relative; z-index: 1; flex: 1; min-width: 0; height: 100%; border: none; background: none; border-radius: 27px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  color: #b9acb2; font-size: 11.5px; font-weight: 500; cursor: pointer; transition: color 0.3s ease;
+}
+.nav-btn svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nav-btn.active { color: var(--accent-2); }
+
+/* ---------- toast ---------- */
+#appToast {
+  position: fixed; left: 50%; bottom: calc(106px + var(--safe-bottom, 0px)); transform: translateX(-50%);
+  background: rgba(30, 20, 26, 0.96); border: 1px solid var(--line); color: #fff;
+  font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px;
+  z-index: 90; max-width: 86%; text-align: center; display: none;
+}
+#appToast.show { display: block; }
+
+
+</style>
+<style>
+
+.page-title { font-size: 30px; font-weight: 900; letter-spacing: -0.5px; margin: 6px 2px 18px; }
+.pf-card { display: flex; align-items: center; gap: 16px; padding: 18px; border-radius: 26px; background: linear-gradient(135deg, rgba(232,41,79,0.28), rgba(122,10,48,0.22)); border: 1px solid rgba(255,255,255,0.1); }
+.pf-av { width: 68px; height: 68px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 24px; font-weight: 900; color: #fff; background: linear-gradient(135deg, #E8294F, #7A0A30); background-size: cover; background-position: center; border: 2px solid rgba(255,255,255,0.25); }
+.pf-name { font-size: 20px; font-weight: 800; overflow-wrap: anywhere; }
+.pf-sub { margin-top: 3px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.62); }
+.sec-title { margin: 24px 2px 10px; font-size: 13px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: rgba(255,255,255,0.72); }
+.adfree { margin-top: 12px; padding: 13px 16px; border-radius: 20px; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.045); border: 1px dashed rgba(255,255,255,0.18); font-size: 13.5px; font-weight: 600; color: rgba(255,255,255,0.65); line-height: 1.4; }
+.adfree.on { background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(251,191,36,0.06)); border: 1px solid rgba(251,191,36,0.5); color: #fff; }
+.adfree .af-t { flex: 1; min-width: 0; }
+.adfree .af-t b { display: block; font-size: 11px; letter-spacing: 0.8px; color: #FBBF24; margin-bottom: 3px; }
+.adfree .af-left { font-size: 19px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.ac2 { padding: 16px 18px; margin-bottom: 12px; border-radius: 22px; background: linear-gradient(135deg, rgba(16,185,129,0.16), rgba(16,185,129,0.05)); border: 1px solid rgba(16,185,129,0.4); cursor: pointer; }
+.ac2:active { transform: scale(0.985); }
+.ac2-top { display: flex; align-items: center; gap: 10px; }
+.ac2-top .t { flex: 1; min-width: 0; font-size: 16px; font-weight: 800; overflow-wrap: anywhere; }
+.chip2 { flex: none; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; color: #6EE7B7; background: rgba(16,185,129,0.18); border: 1px solid rgba(16,185,129,0.45); }
+.ac2-lbl { margin-top: 12px; font-size: 11px; font-weight: 800; letter-spacing: 0.7px; color: rgba(255,255,255,0.55); }
+.ac2-left { margin-top: 2px; font-size: 30px; font-weight: 900; font-variant-numeric: tabular-nums; color: #34D399; }
+.bar { height: 8px; margin-top: 10px; border-radius: 99px; background: rgba(255,255,255,0.1); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #10B981, #34D399); transition: width .6s; }
+.bar.gold i { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+.ac2-date { margin-top: 8px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.6); }
+.pf-empty { padding: 22px 18px; border-radius: 22px; text-align: center; background: rgba(255,255,255,0.045); border: 1px dashed rgba(255,255,255,0.18); }
+.pf-empty p { margin: 0 0 14px; font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.65); }
+.pf-btn { height: 46px; padding: 0 22px; border: none; border-radius: 16px; background: var(--accent); color: #fff; font-family: inherit; font-size: 15px; font-weight: 800; }
+.ref { padding: 18px; border-radius: 24px; background: linear-gradient(160deg, rgba(232,41,79,0.22), rgba(60,0,20,0.5)); border: 1px solid rgba(255,255,255,0.12); }
+.ref h3 { margin: 0 0 6px; font-size: 18px; font-weight: 900; }
+.ref p { margin: 0; font-size: 13.5px; line-height: 1.55; color: rgba(255,255,255,0.75); }
+.ref p b { color: #FBBF24; }
+.ref-link { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.12); font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,0.85); word-break: break-all; user-select: all; }
+.ref-btns { display: flex; gap: 10px; margin-top: 10px; }
+.ref-btns button { flex: 1; height: 46px; border: none; border-radius: 15px; font-family: inherit; font-size: 15px; font-weight: 800; }
+.ref-btns .b1 { background: rgba(255,255,255,0.12); color: #fff; }
+.ref-btns .b2 { background: #fff; color: #7A0A30; }
+.ref-stats { display: flex; gap: 10px; margin-top: 16px; }
+.ref-stats div { flex: 1; padding: 12px; border-radius: 16px; text-align: center; background: rgba(255,255,255,0.07); }
+.ref-stats b { display: block; font-size: 24px; font-weight: 900; }
+.ref-stats small { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); }
+.ref-ms { margin-top: 8px; font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,0.7); }
+.ref-steps { margin: 16px 0 0; padding: 0; list-style: none; counter-reset: s; }
+.ref-steps li { position: relative; padding: 6px 0 6px 34px; font-size: 13px; line-height: 1.45; color: rgba(255,255,255,0.78); counter-increment: s; }
+.ref-steps li::before { content: counter(s); position: absolute; left: 0; top: 4px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: rgba(232,41,79,0.35); font-size: 12px; font-weight: 900; }
+.pf-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-radius: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); font-size: 15px; font-weight: 700; }
+.pf-row b { color: rgba(255,255,255,0.7); font-weight: 700; }
+.pf-link { cursor: pointer; }
+.pf-link:active { transform: scale(0.985); }
+.pf-badge { padding: 3px 10px; border-radius: 999px; background: #E8294F; color: #fff !important; font-size: 12px; }
+
+</style>
+</head>
+<body data-page="profile">
+<div class="page">
+  <div class="page-title">Profile</div>
+  <div class="pf-card"><div class="pf-av" id="pfAv"></div><div><div class="pf-name" id="pfName">Loading…</div><div class="pf-sub" id="pfSub"></div></div></div>
+  <div id="adfreeBox"></div>
+  <div class="sec-title">My access</div>
+  <div id="accessList"></div>
+  <div class="sec-title">Invite &amp; Earn</div>
+  <div id="refBox"></div>
+  <div class="sec-title">Settings</div>
+  <div class="pf-row pf-link" id="supportRow" style="margin-bottom:10px"><span>Help &amp; Support</span><b id="supportBadge">›</b></div>
+  <div class="pf-row"><span>Language</span><b>English</b></div>
+</div>
+<div class="app-nav" id="appNav"></div>
+
+<script>
+/* =====================================================================
+   app.js — shared by all pages (navigation, API, toast)
+   Sab kuch window.App ke andar hai, taaki pages ke apne variables se
+   (jaise `tg`) kuch na takraye.
+   ===================================================================== */
+(function () {
+  'use strict';
+
+  const API_BASE = 'https://animezone-bot.onrender.com';
+  const tg = (window.Telegram && window.Telegram.WebApp) || null;
+
+  if (tg) {
+    try { tg.ready(); tg.expand(); } catch (e) {}
+    try { tg.setHeaderColor('#36000f'); } catch (e) {}
+    try { tg.setBackgroundColor('#0b0005'); } catch (e) {}
+    try { tg.setBottomBarColor('#2f000e'); } catch (e) {}
+  }
+
+  /* ---------- Telegram fullscreen: upar Close button / neeche system bar ke liye jagah ---------- */
+  function applyInsets() {
+    if (!tg) return;
+    const sa = tg.safeAreaInset || {};
+    const ca = tg.contentSafeAreaInset || {};
+    let top = (sa.top || 0) + (ca.top || 0);
+    let bottom = sa.bottom || 0;
+    if (tg.isFullscreen) {               // Telegram ne value na di to bhi kuch jagah chhodo
+      if (top < 60) top = 84;
+      if (bottom < 12) bottom = 20;
+    }
+    const root = document.documentElement;
+    root.style.setProperty('--safe-top', top + 'px');
+    root.style.setProperty('--safe-bottom', bottom + 'px');
+  }
+  applyInsets();
+  if (tg && tg.onEvent) {
+    ['safeAreaChanged', 'contentSafeAreaChanged', 'fullscreenChanged'].forEach((ev) => {
+      try { tg.onEvent(ev, applyInsets); } catch (e) {}
+    });
+  }
+
+  /* ---------- icons ---------- */
+  const ICONS = {
+    collections: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3z"/></svg>',
+    home: '<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+    games: '<svg viewBox="0 0 24 24"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg>',
+    store: '<svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+    content: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/></svg>',
+    profile: '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  };
+  const PAGES = [
+    { id: 'collections', href: 'collections.html', label: 'Collections' },
+    { id: 'content', href: 'exclusive.html', label: 'Content' },
+    { id: 'store', href: 'store.html', label: 'Store' },
+    { id: 'profile', href: 'profile.html', label: 'Profile' },
+  ];
+
+  const escHtml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  /* ---------- navigation ---------- */
+  function go(href) { window.location.href = href; }
+
+  function mountNav() {
+    const el = document.getElementById('appNav');
+    if (!el || el.getAttribute('data-ready')) return;
+    el.setAttribute('data-ready', '1');
+    const current = document.body.getAttribute('data-page');
+    const cur = Math.max(0, PAGES.findIndex((p) => p.id === current));
+
+    el.innerHTML = '<div class="nav-pill"></div>' + PAGES.map((p, i) =>
+      `<button class="nav-btn ${i === cur ? 'active' : ''}" data-href="${p.href}" aria-label="${p.label}">${ICONS[p.id]}<span>${p.label}</span></button>`
+    ).join('');
+
+    const pill = el.querySelector('.nav-pill');
+    const btns = Array.prototype.slice.call(el.querySelectorAll('.nav-btn'));
+
+    // Pichle page se aaye ho to pill wahin se shuru ho kar naye tab tak slide kare
+    let from = -1;
+    try {
+      from = parseInt(sessionStorage.getItem('navFrom'), 10);
+      sessionStorage.removeItem('navFrom');
+    } catch (e) {}
+    if (from >= 0 && from < PAGES.length && from !== cur) {
+      pill.style.transition = 'none';
+      pill.style.setProperty('--i', from);
+      btns[cur].classList.remove('active');
+      btns[from].classList.add('active');
+      void pill.offsetWidth;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        pill.style.transition = '';
+        pill.style.setProperty('--i', cur);
+        btns[from].classList.remove('active');
+        btns[cur].classList.add('active');
+      }));
+    } else {
+      pill.style.setProperty('--i', cur);
+    }
+
+    let leaving = false;
+    el.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-href]');
+      if (!b || leaving || b === btns[cur]) return;
+      leaving = true;
+      try { sessionStorage.setItem('navFrom', String(cur)); } catch (err) {}
+      document.body.classList.add('leaving');          // page halka sa fade-out
+      setTimeout(() => go(b.getAttribute('data-href')), 140);
+    });
+  }
+  // Back button se wapas aao to fade-out wali halat hata do
+  window.addEventListener('pageshow', () => document.body.classList.remove('leaving'));
+
+  /* ---------- API (Telegram login header ke saath) ---------- */
+  async function api(path, opts) {
+    opts = opts || {};
+    const res = await fetch(API_BASE + path, {
+      method: opts.method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': (tg && tg.initData) || '',
+      },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    let data = null;
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) {
+      if (res.status === 403 && data && data.error === 'join_required') {   // channel join pending: gate dikhao
+        try { sessionStorage.removeItem('azGateOk'); } catch (e) {}
+        showGate(data.channels || []);
+      }
+      const err = new Error((data && (data.message || data.error)) || ('HTTP ' + res.status));
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
+
+  const fmt = (n) => Number(n || 0).toLocaleString('en-IN');
+
+  /* ---------- toast ---------- */
+  let toastTimer = null;
+  function toast(msg) {
+    let t = document.getElementById('appToast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'appToast';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+
+  /* ---------- channel join gate (3 channels join karo, phir Verify) ---------- */
+  function openLink(u) {
+    try {
+      if (tg && /^https:\/\/t\.me\//.test(u) && tg.openTelegramLink) tg.openTelegramLink(u);
+      else if (tg && tg.openLink) tg.openLink(u);
+      else window.open(u, '_blank');
+    } catch (e) {}
+  }
+  function removeGate() { const g = document.getElementById('azGate'); if (g) g.remove(); }
+  function showGate(channels, message) {
+    if (!document.getElementById('azGateCss')) {
+      const st = document.createElement('style');
+      st.id = 'azGateCss';
+      st.textContent = '#azGate{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:calc(var(--safe-top,0px) + 20px) 20px calc(var(--safe-bottom,0px) + 20px);background:rgba(11,0,5,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);font-family:Inter,system-ui,sans-serif;color:#fff}' +
+        '#azGate .gate-card{width:100%;max-width:380px;max-height:100%;overflow:auto;padding:26px 22px;border-radius:28px;background:linear-gradient(160deg,rgba(232,41,79,.26),rgba(60,0,20,.9));border:1px solid rgba(255,255,255,.12);text-align:center}' +
+        '#azGate .gate-ico{font-size:40px}#azGate h2{margin:8px 0 6px;font-size:22px;font-weight:900}#azGate p{margin:0 0 18px;font-size:14px;line-height:1.5;color:rgba(255,255,255,.7)}' +
+        '#azGate .gate-row{display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:10px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);text-align:left}' +
+        '#azGate .gate-t{flex:1;min-width:0;font-size:15px;font-weight:800;overflow-wrap:anywhere}' +
+        '#azGate .gate-join{height:38px;padding:0 18px;border:none;border-radius:12px;background:#E8294F;color:#fff;font:inherit;font-size:14px;font-weight:800}' +
+        '#azGate .gate-ok{font-size:13px;font-weight:800;color:#34D399}' +
+        '#azGate .gate-verify{width:100%;height:52px;margin-top:8px;border:none;border-radius:18px;background:#fff;color:#7A0A30;font:inherit;font-size:16px;font-weight:900}' +
+        '#azGate .gate-verify:disabled{opacity:.6}#azGate .gate-msg{min-height:18px;margin-top:12px;font-size:13px;line-height:1.45;color:#FCA5A5}';
+      document.head.appendChild(st);
+    }
+    let g = document.getElementById('azGate');
+    if (!g) { g = document.createElement('div'); g.id = 'azGate'; document.body.appendChild(g); }
+    const list = channels || [];
+    g.innerHTML = '<div class="gate-card"><div class="gate-ico">🔒</div><h2>Join to continue</h2><p>Join all the channels below, then tap Verify.</p>' +
+      list.map((c, i) => '<div class="gate-row"><div class="gate-t">' + escHtml(c.title) + '</div>' + (c.joined ? '<span class="gate-ok">✓ Joined</span>' : '<button class="gate-join" data-i="' + i + '">Join</button>') + '</div>').join('') +
+      '<button class="gate-verify" id="gateVerify">✅ I\'ve joined — Verify</button><div class="gate-msg" id="gateMsg">' + escHtml(message || '') + '</div></div>';
+    g.onclick = async (e) => {
+      const j = e.target.closest('.gate-join');
+      if (j) { const c = list[Number(j.getAttribute('data-i'))]; if (c && c.link) openLink(c.link); return; }
+      if (!e.target.closest('#gateVerify')) return;
+      const btn = document.getElementById('gateVerify'), msg = document.getElementById('gateMsg');
+      btn.disabled = true; btn.textContent = 'Checking…'; msg.textContent = '';
+      try {
+        const r = await api('/api/membership/verify', { method: 'POST' });
+        if (r.ok) {
+          try { sessionStorage.setItem('azGateOk', JSON.stringify({ at: Date.now() })); } catch (err) {}
+          removeGate(); toast('Verified ✅');
+          try { window.dispatchEvent(new CustomEvent('az-gate-ok')); } catch (err) {}
+        } else {
+          showGate(r.channels, 'You haven\'t joined: ' + r.channels.filter((c) => !c.joined).map((c) => c.title).join(', ') + '. Join, then tap Verify again.');
+        }
+      } catch (err) {
+        btn.disabled = false; btn.textContent = '✅ I\'ve joined — Verify';
+        msg.textContent = 'Couldn\'t verify. Check your connection and try again.';
+      }
+    };
+  }
+  async function gateCheck() {
+    if (/[?&]demo=1/.test(window.location.search)) return;
+    try { const c = JSON.parse(sessionStorage.getItem('azGateOk') || 'null'); if (c && Date.now() - c.at < 60000) return; } catch (e) {}
+    try {
+      const r = await api('/api/membership');
+      if (r && r.ok) { try { sessionStorage.setItem('azGateOk', JSON.stringify({ at: Date.now() })); } catch (e) {} removeGate(); }
+      else if (r && r.channels) showGate(r.channels);
+    } catch (e) { /* server so raha ho to kuch mat roko: har action par server khud check karta hai */ }
+  }
+
+  // Nav turant lagao (script body ke end mein hai), taaki pehle paint se hi dikhe
+  if (document.getElementById('appNav')) mountNav();
+  else document.addEventListener('DOMContentLoaded', mountNav);
+
+  setTimeout(gateCheck, 0);
+
+  window.App = { API_BASE, tg, api, go, toast, fmt, icons: ICONS, gateCheck, showGate };
+})();
+
+</script>
+<script>
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+const fmtDur = (ms) => {
+  if (ms <= 0) return '0:00';
+  const s = Math.floor(ms / 1000), d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  if (d >= 1) return d + 'd ' + h + 'h ' + m + 'm';
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+};
+const fmtWhen = (iso) => { try { return new Date(iso).toLocaleString([], { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } };
+let me = null;
+const tgUser = (App.tg && App.tg.initDataUnsafe && App.tg.initDataUnsafe.user) || null;
+
+function paintHeader() {
+  const name = (me && me.name) || (tgUser && [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ')) || 'Guest';
+  const uname = (me && me.username) || (tgUser && tgUser.username) || '';
+  document.getElementById('pfName').textContent = name;
+  let sub = uname ? '@' + uname : '';
+  if (me && me.joinedAt) { try { sub += (sub ? ' · ' : '') + 'Member since ' + new Date(me.joinedAt).toLocaleDateString([], { month: 'short', year: 'numeric' }); } catch (e) {} }
+  document.getElementById('pfSub').textContent = sub;
+  const av = document.getElementById('pfAv');
+  const photo = tgUser && tgUser.photo_url;
+  if (photo && /^https:\/\//.test(photo)) { av.style.backgroundImage = 'url("' + encodeURI(photo) + '")'; av.textContent = ''; }
+  else av.textContent = String(name).trim().slice(0, 2).toUpperCase();
+}
+function paintAdFree() {
+  const box = document.getElementById('adfreeBox');
+  const until = me && me.adFreeUntil;
+  if (until && Date.parse(until) > Date.now()) {
+    box.innerHTML = '<div class="adfree on"><div class="af-t"><b>✨ AD-FREE ACTIVE</b>No ads before your content</div><div class="af-left" data-adfree="' + esc(until) + '">' + esc(fmtDur(Date.parse(until) - Date.now())) + '</div></div>';
+  } else {
+    box.innerHTML = '<div class="adfree"><div class="af-t">Invite friends to earn ad-free days. See “Invite &amp; Earn” below.</div></div>';
+  }
+}
+function paintAccess() {
+  const box = document.getElementById('accessList');
+  const list = (me && me.access) || [];
+  if (!me) { box.innerHTML = '<div class="pf-empty"><p>Loading…</p></div>'; return; }
+  if (!list.length) { box.innerHTML = '<div class="pf-empty"><p>You don\'t have access to any collection yet.</p><button class="pf-btn" data-go="1">Browse collections</button></div>'; return; }
+  box.innerHTML = list.map((a) => {
+    const exp = Date.parse(a.expiresAt), start = a.grantedAt ? Date.parse(a.grantedAt) : exp - (a.days || 1) * 86400000;
+    const total = Math.max(1, exp - start), pct = Math.max(2, Math.min(100, Math.round(((exp - Date.now()) / total) * 100)));
+    return '<div class="ac2" data-go="1"><div class="ac2-top"><div class="t">' + esc(a.title) + '</div>' + (a.days ? '<div class="chip2">' + esc(a.days) + '-day plan</div>' : '') + '</div>' +
+      '<div class="ac2-lbl">TIME LEFT</div><div class="ac2-left" data-exp="' + esc(a.expiresAt) + '">' + esc(fmtDur(exp - Date.now())) + '</div>' +
+      '<div class="bar"><i data-bar="' + esc(a.expiresAt) + '" data-start="' + start + '" style="width:' + pct + '%"></i></div>' +
+      '<div class="ac2-date">Ends ' + esc(fmtWhen(a.expiresAt)) + '</div></div>';
+  }).join('');
+}
+function paintRef() {
+  const box = document.getElementById('refBox');
+  const r = me && me.referral;
+  if (!r) { box.innerHTML = '<div class="pf-empty"><p>Loading…</p></div>'; return; }
+  if (!r.enabled) { box.innerHTML = '<div class="pf-empty"><p>The refer program is paused right now. Please check back soon.</p></div>'; return; }
+  const toNext = r.milestoneEvery - (r.verified % r.milestoneEvery);
+  const pct = Math.round(((r.verified % r.milestoneEvery) / r.milestoneEvery) * 100);
+  const day = (n) => n + ' day' + (n === 1 ? '' : 's');
+  box.innerHTML = '<div class="ref"><h3>Invite a friend, get ad-free days</h3>' +
+    '<p>When your friend joins our channels and verifies, you get <b>' + esc(day(r.rewardDays)) + ' ad-free</b>. Every <b>' + esc(r.milestoneEvery) + '</b> verified friends gives <b>+' + esc(day(r.milestoneBonus)) + '</b> extra.</p>' +
+    (r.link ? '<div class="ref-link" id="refLink">' + esc(r.link) + '</div><div class="ref-btns"><button class="b1" data-ref="copy">Copy link</button><button class="b2" data-ref="share">Share</button></div>'
+            : '<div class="ref-link">Your link isn\'t ready yet. Please reopen the app in a moment.</div>') +
+    '<div class="ref-stats"><div><b>' + esc(r.verified) + '</b><small>Verified</small></div><div><b>' + esc(r.pending) + '</b><small>Waiting to verify</small></div></div>' +
+    '<div class="bar gold"><i style="width:' + pct + '%"></i></div><div class="ref-ms">' + esc(toNext) + ' more verified friend' + (toNext === 1 ? '' : 's') + ' for +' + esc(day(r.milestoneBonus)) + ' bonus</div>' +
+    '<ol class="ref-steps"><li>Share your link with a friend</li><li>They start the bot and join our channels, then tap Verify</li><li>You get ad-free days right away</li></ol></div>';
+}
+function paintSupport() {
+  const b = document.getElementById('supportBadge');
+  const n = (me && me.supportUnread) || 0;
+  b.textContent = n ? n + ' new' : '›';
+  b.className = n ? 'pf-badge' : '';
+}
+function paintAll() { paintHeader(); paintAdFree(); paintAccess(); paintRef(); paintSupport(); }
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); App.toast('Link copied'); return; } catch (e) {}
+  try { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); App.toast('Link copied'); }
+  catch (e) { App.toast('Press and hold the link to copy'); }
+}
+document.getElementById('refBox').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-ref]');
+  if (!b || !me || !me.referral || !me.referral.link) return;
+  const link = me.referral.link;
+  if (b.dataset.ref === 'copy') copyText(link);
+  else {
+    const url = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent('Watch exclusive videos on AnimeZone 👇');
+    try { App.tg.openTelegramLink(url); } catch (err) { copyText(link); }
+  }
+});
+document.getElementById('accessList').addEventListener('click', (e) => { if (e.target.closest('[data-go]')) App.go('collections.html'); });
+document.getElementById('supportRow').addEventListener('click', () => App.go('support.html'));
+
+setInterval(() => {
+  let expired = false;
+  document.querySelectorAll('[data-exp]').forEach((el) => { const ms = Date.parse(el.getAttribute('data-exp')) - Date.now(); el.textContent = fmtDur(ms); if (ms <= 0) expired = true; });
+  document.querySelectorAll('[data-adfree]').forEach((el) => { const ms = Date.parse(el.getAttribute('data-adfree')) - Date.now(); el.textContent = fmtDur(ms); if (ms <= 0) expired = true; });
+  document.querySelectorAll('[data-bar]').forEach((el) => { const exp = Date.parse(el.getAttribute('data-bar')), st = Number(el.getAttribute('data-start')); el.style.width = Math.max(2, Math.min(100, Math.round(((exp - Date.now()) / Math.max(1, exp - st)) * 100))) + '%'; });
+  if (expired) load();
+}, 1000);
+async function load() {
+  try { me = await App.api('/api/me'); } catch (e) { me = me || { access: [], referral: null }; }
+  paintAll();
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+paintAll();
+load();
+
+</script>
+</body>
+</html>

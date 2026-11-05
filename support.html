@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>html,body{background:#19000a}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>AnimeZone - Support</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+
+/* =====================================================================
+   THEME — dark crimson (shared by all pages)
+   Pages: collections.html, store.html, profile.html
+   (Content), profile.html
+   ===================================================================== */
+:root {
+  --accent: #E8294F;
+  --accent-2: #F0476A;
+  --gold: #FBBF24;
+  --text: #ffffff;
+  --muted: #a99ca2;
+  --line: rgba(255, 255, 255, 0.10);
+  --panel: rgba(9, 3, 7, 0.88);
+  --page-bg: linear-gradient(180deg, #36000f 0%, #19000a 36%, #0b0005 62%, #2f000e 100%);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+  background: var(--page-bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+button { font-family: inherit; }
+
+/* ---------- page layout ---------- */
+.page {
+  flex: 1; min-height: 0; overflow-y: auto;
+  /* Telegram fullscreen mode mein upar Close button / neeche system bar ke liye jagah (app.js --safe-top / --safe-bottom set karta hai) */
+  padding: calc(var(--safe-top, 0px) + 8px) 16px calc(120px + var(--safe-bottom, 0px));
+  animation: pageIn 0.28s ease backwards;
+}
+@keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+body.leaving .page { opacity: 0; transform: translateY(-8px); transition: opacity 0.14s ease, transform 0.14s ease; }
+.page::-webkit-scrollbar { display: none; }
+.page-title { font-size: 34px; font-weight: 800; letter-spacing: -1px; padding: 22px 4px 18px; }
+.section-title { font-size: 22px; font-weight: 800; padding: 26px 4px 6px; }
+.muted { color: var(--muted); }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 28px; }
+
+
+/* ---------- buttons ---------- */
+.btn-row { display: flex; gap: 12px; }
+.btn {
+  flex: 1; height: 54px; border: none; border-radius: 20px;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  font-size: 17px; font-weight: 700; color: #fff; cursor: pointer;
+}
+.btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.btn.primary { background: var(--accent); box-shadow: 0 8px 22px rgba(232, 41, 79, 0.35); }
+.btn.dark { background: #1a1316; border: 1px solid var(--line); }
+
+/* ---------- floating bottom navigation (sliding pill) ---------- */
+.app-nav {
+  position: fixed; left: 14px; right: 14px; bottom: calc(14px + var(--safe-bottom, 0px)); height: 74px; z-index: 40;
+  display: flex; align-items: center; padding: 7px;
+  background: rgba(20, 14, 18, 0.94); border: 1px solid var(--line); border-radius: 34px;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+/* active tab ka highlight: ek pill jo tab se tab slide karti hai */
+.nav-pill {
+  position: absolute; top: 7px; bottom: 7px; left: 7px; width: calc((100% - 14px) / 4);
+  border-radius: 27px; background: #2a2327; z-index: 0; will-change: transform;
+  transform: translateX(calc(var(--i, 0) * 100%));
+  transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.nav-btn {
+  position: relative; z-index: 1; flex: 1; min-width: 0; height: 100%; border: none; background: none; border-radius: 27px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  color: #b9acb2; font-size: 11.5px; font-weight: 500; cursor: pointer; transition: color 0.3s ease;
+}
+.nav-btn svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nav-btn.active { color: var(--accent-2); }
+
+/* ---------- toast ---------- */
+#appToast {
+  position: fixed; left: 50%; bottom: calc(106px + var(--safe-bottom, 0px)); transform: translateX(-50%);
+  background: rgba(30, 20, 26, 0.96); border: 1px solid var(--line); color: #fff;
+  font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px;
+  z-index: 90; max-width: 86%; text-align: center; display: none;
+}
+#appToast.show { display: block; }
+
+
+</style>
+<style>
+
+
+/* ===== Store page ===== */
+.store-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 4px 14px; }
+.store-head .page-title { padding: 0; }
+.head-actions { display: flex; align-items: center; gap: 10px; }
+.wallet-chip {
+  display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px 0 10px; border-radius: 22px;
+  background: var(--panel); border: 1px solid var(--line); color: #fff; font-size: 16px; font-weight: 800; cursor: pointer;
+}
+.wallet-chip .coin { font-size: 24px; }
+.icon-btn {
+  width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid var(--line);
+  color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.icon-btn svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+
+.search-row { display: none; align-items: center; gap: 10px; margin-bottom: 12px; background: rgba(255,255,255,0.07); border: 1px solid var(--line); border-radius: 22px; padding: 12px 16px; }
+.search-row.open { display: flex; }
+.search-row svg { width: 19px; height: 19px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; flex-shrink: 0; }
+.search-row input { border: none; background: transparent; width: 100%; color: #fff; font-size: 15px; font-family: inherit; }
+.search-row input::placeholder { color: var(--muted); }
+.demo-note { display: none; margin: 0 0 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; color: var(--gold); background: rgba(251,191,36,0.10); border: 1px dashed rgba(251,191,36,0.4); padding: 7px 12px; border-radius: 12px; }
+
+.segment { display: flex; gap: 4px; background: rgba(255,255,255,0.06); border-radius: 18px; padding: 4px; margin-bottom: 4px; }
+.seg { flex: 1; background: none; border: none; color: var(--muted); font-family: inherit; font-size: 13px; font-weight: 700; padding: 10px 0; border-radius: 14px; cursor: pointer; transition: background 0.25s, color 0.25s; }
+.seg.active { background: #2a2327; color: var(--accent-2); }
+
+.pills { display: flex; gap: 8px; padding: 12px 0 10px; overflow-x: auto; }
+.pills::-webkit-scrollbar { display: none; }
+.pill { flex-shrink: 0; background: rgba(255,255,255,0.07); border: none; color: #cbbfc5; font-family: inherit; font-size: 13px; font-weight: 700; padding: 9px 17px; border-radius: 20px; white-space: nowrap; cursor: pointer; }
+.pill.active { background: var(--accent); color: #fff; box-shadow: 0 6px 16px rgba(232,41,79,0.3); }
+
+/* product cards */
+.card { position: relative; height: 224px; border-radius: 28px; overflow: hidden; margin-bottom: 16px; background: #1a1013; border: 1px solid var(--line); cursor: pointer; box-shadow: 0 10px 26px rgba(0,0,0,0.4); }
+.card:active { transform: scale(0.985); }
+.card-img { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.card-art { position: absolute; inset: 0; overflow: hidden; }
+.card-art::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 80% 26%, rgba(255,255,255,0.30), rgba(255,255,255,0) 48%); }
+.card-art::after { content: ''; position: absolute; width: 220px; height: 220px; right: -60px; top: -70px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.16); box-shadow: 0 0 0 26px rgba(255,255,255,0.04), 0 0 0 58px rgba(255,255,255,0.03); }
+.card-emoji { position: absolute; right: 24px; top: 18px; z-index: 1; font-size: 96px; transform: rotate(-8deg); filter: drop-shadow(0 10px 18px rgba(0,0,0,0.35)); }
+.card-shade { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 42%, rgba(0,0,0,0) 74%); }
+.card.soldout .card-img, .card.soldout .card-art, .card.soldout .card-shade { filter: grayscale(0.9); }
+.card.soldout .price-main { color: rgba(255,255,255,0.6); }
+.card-img.img-blur { inset: -20px; filter: blur(22px) brightness(0.7) saturate(1.2); }
+.card-img.img-main { background-size: contain; background-repeat: no-repeat; }
+.card.soldout .card-img.img-blur { filter: blur(22px) grayscale(0.9) brightness(0.7); }
+
+.badge { position: absolute; top: 14px; left: 14px; z-index: 2; display: flex; align-items: center; gap: 7px; padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: 0.3px; color: #1a1a2e; background: rgba(255,255,255,0.95); box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+.badge .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+
+.card-bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 16px 18px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; z-index: 2; }
+.card-info { flex: 1; min-width: 0; }
+.card-title { font-size: 20px; font-weight: 800; line-height: 1.15; margin-bottom: 10px; color: #fff; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+.meta-row { display: flex; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,0.92); white-space: nowrap; overflow: hidden; }
+.meta { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.meta .t { overflow: hidden; text-overflow: ellipsis; }
+.meta.rating { color: var(--gold); }
+.sep { width: 1px; height: 18px; background: rgba(255,255,255,0.35); flex-shrink: 0; }
+.mini-av { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg, #FBBF24, #F59E0B); display: flex; align-items: center; justify-content: center; font-size: 9.5px; font-weight: 800; color: #1a1a2e; }
+.price-box { text-align: right; flex-shrink: 0; }
+.price-main { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 26px; font-weight: 900; color: var(--gold); line-height: 1; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+.price-main .coin { font-size: 22px; }
+.price-old { font-size: 12px; color: rgba(255,255,255,0.65); text-decoration: line-through; margin-top: 5px; }
+.price-alt { font-size: 11.5px; color: rgba(255,255,255,0.75); font-weight: 600; margin-top: 5px; }
+@media (max-width: 380px) { .meta.rating, .meta.rating + .sep, .sep + .meta.rating { display: none; } }
+
+/* skeleton + empty */
+.skeleton { height: 224px; border-radius: 28px; margin-bottom: 16px; background: linear-gradient(90deg, #1a1013 25%, #26181f 37%, #1a1013 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; }
+@keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+.load-hint { text-align: center; font-size: 12px; color: var(--muted); padding: 2px 0 12px; }
+.empty { text-align: center; padding: 56px 28px; }
+.empty-icon { width: 84px; height: 84px; border-radius: 50%; margin: 0 auto 18px; background: rgba(232,41,79,0.14); display: flex; align-items: center; justify-content: center; color: var(--accent-2); }
+.empty-icon svg { width: 38px; height: 38px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.empty h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+.empty p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.retry-btn { margin-top: 16px; background: var(--accent); color: #fff; border: none; padding: 11px 26px; border-radius: 20px; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+
+/* product sheet */
+.sheet-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.62); display: none; align-items: flex-end; z-index: 60; }
+.sheet-backdrop.open { display: flex; }
+.sheet { width: 100%; max-height: 92vh; overflow-y: auto; background: #120a0e; border-top: 1px solid var(--line); border-radius: 28px 28px 0 0; animation: sheetUp 0.28s cubic-bezier(0.32, 0.72, 0, 1); }
+.sheet::-webkit-scrollbar { display: none; }
+@keyframes sheetUp { from { transform: translateY(60px); opacity: 0; } to { transform: none; opacity: 1; } }
+.sheet-hero { position: relative; height: 210px; overflow: hidden; border-radius: 28px 28px 0 0; background: #1a1013; }
+.hero-shade { position: absolute; inset: 0; background: linear-gradient(to top, #120a0e 0%, rgba(18,10,14,0) 55%); }
+.sheet-close { position: absolute; top: 14px; right: 14px; z-index: 3; width: 42px; height: 42px; border-radius: 50%; background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.sheet-close svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; }
+.sheet-body { padding: 4px 20px calc(24px + var(--safe-bottom, 0px)); }
+.grab { width: 44px; height: 4px; border-radius: 4px; background: rgba(255,255,255,0.2); margin: 12px auto 14px; }
+.sheet-title { font-size: 24px; font-weight: 800; line-height: 1.2; letter-spacing: -0.4px; }
+.sheet-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; font-size: 12.5px; font-weight: 600; color: #e7dde2; }
+.chip { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.07); padding: 6px 12px; border-radius: 999px; }
+.chip.gold { color: var(--gold); }
+.sheet-desc { color: #cbbfc5; font-size: 14px; line-height: 1.65; margin: 14px 0 4px; white-space: pre-line; }
+.pay-title { font-size: 12px; font-weight: 800; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin: 20px 0 10px; }
+.pay-opt { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border: 1.5px solid var(--line); border-radius: 20px; background: rgba(255,255,255,0.04); margin-bottom: 10px; cursor: pointer; }
+.pay-opt.selected { border-color: var(--accent); background: rgba(232,41,79,0.10); }
+.pay-opt.disabled { opacity: 0.6; cursor: default; }
+.pay-ico { width: 42px; height: 42px; border-radius: 50%; background: #231b1f; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; flex-shrink: 0; }
+.pay-ico .coin { font-size: 24px; }
+.pay-info { min-width: 0; flex: 1; }
+.pay-info b { display: block; font-size: 15px; font-weight: 700; }
+.pay-info small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.pay-info small.bad { color: #ff8da1; }
+.pay-amt { display: flex; align-items: center; gap: 5px; font-size: 16px; font-weight: 800; color: var(--gold); white-space: nowrap; }
+.pay-amt .coin { font-size: 17px; }
+.pay-radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #6b5a61; flex-shrink: 0; }
+.pay-opt.selected .pay-radio { border-color: var(--accent); background: radial-gradient(circle, var(--accent) 42%, transparent 46%); }
+.soon-tag { font-size: 10px; font-weight: 800; letter-spacing: 0.8px; color: var(--accent-2); background: rgba(232,41,79,0.15); padding: 4px 9px; border-radius: 999px; }
+.notice { margin-top: 14px; padding: 12px 14px; border-radius: 16px; font-size: 13px; line-height: 1.5; font-weight: 600; }
+.notice.err { background: rgba(232,41,79,0.14); border: 1px solid rgba(232,41,79,0.4); color: #ffc2cd; }
+.cta { width: 100%; height: 56px; margin-top: 16px; border: none; border-radius: 20px; background: var(--accent); color: #fff; font-family: inherit; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 24px rgba(232,41,79,0.35); cursor: pointer; }
+.cta .coin { font-size: 20px; }
+.cta:disabled { background: #2a2327; color: #8f8187; box-shadow: none; cursor: default; }
+.cta.ghost { background: #1a1316; border: 1px solid var(--line); box-shadow: none; }
+.btn-row2 { display: flex; gap: 12px; }
+.btn-row2 .cta { margin-top: 18px; }
+.spin { width: 20px; height: 20px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.35); border-top-color: #fff; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.conf-title { font-size: 22px; font-weight: 800; margin-bottom: 14px; }
+.conf-item { display: flex; align-items: center; gap: 14px; padding: 12px; border: 1px solid var(--line); border-radius: 20px; background: rgba(255,255,255,0.04); }
+.conf-art { position: relative; width: 62px; height: 62px; border-radius: 16px; overflow: hidden; flex-shrink: 0; }
+.conf-art .card-emoji { font-size: 36px; right: 10px; top: 10px; }
+.conf-item b { font-size: 16px; line-height: 1.25; display: block; }
+.conf-item small { color: var(--muted); font-size: 12.5px; }
+.sum { margin-top: 14px; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+.sum-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 16px; font-size: 14.5px; color: #d9cdd3; }
+.sum-row + .sum-row { border-top: 1px solid var(--line); }
+.sum-row b { display: flex; align-items: center; gap: 6px; color: #fff; font-weight: 800; }
+.sum-row b .coin { font-size: 16px; }
+.sum-row.total { background: rgba(232,41,79,0.10); }
+.sum-row.total b { color: var(--gold); font-size: 17px; }
+
+.done-wrap { text-align: center; padding-top: 22px; }
+.check { width: 84px; height: 84px; }
+.check-c { stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 160; stroke-dashoffset: 160; animation: draw 0.6s ease forwards; }
+.check-p { stroke: #fff; stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw 0.4s 0.45s ease forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.done-wrap h3 { font-size: 24px; font-weight: 800; margin-top: 14px; }
+.done-wrap p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-top: 6px; }
+.delivery { margin-top: 18px; text-align: left; background: rgba(251,191,36,0.07); border: 1px dashed rgba(251,191,36,0.45); border-radius: 18px; padding: 14px 16px; }
+.delivery h4 { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+.delivery div { white-space: pre-wrap; word-break: break-word; font-size: 14.5px; line-height: 1.55; color: #fff; }
+.copy-btn { margin-top: 12px; background: rgba(255,255,255,0.08); border: none; color: #fff; font-family: inherit; font-size: 13px; font-weight: 700; padding: 9px 18px; border-radius: 14px; cursor: pointer; }
+
+/* UPI screen */
+.cta-note { font-size: 12px; color: var(--muted); text-align: center; margin-top: 10px; line-height: 1.5; }
+.upi-amt-card { text-align: center; padding: 4px 0 2px; }
+.upi-label { font-size: 12px; font-weight: 800; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
+.upi-amt-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 6px 0 4px; }
+.upi-amt { font-size: 42px; font-weight: 900; color: var(--gold); letter-spacing: -1px; line-height: 1.1; }
+.mini-copy { background: rgba(255,255,255,0.09); border: none; color: #fff; font-family: inherit; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 12px; cursor: pointer; flex-shrink: 0; }
+.qr-box { width: 244px; height: 244px; margin: 14px auto 8px; background: #fff; border-radius: 20px; padding: 6px; overflow: hidden; box-shadow: 0 10px 28px rgba(0,0,0,0.4); }
+.qr-box svg { width: 100%; height: 100%; display: block; }
+.qr-hint { text-align: center; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.upi-id-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,0.04); }
+.upi-id-row small { display: block; color: var(--muted); font-size: 11.5px; margin-bottom: 2px; }
+.upi-id-row b { font-size: 15px; word-break: break-all; }
+.wait-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 16px; font-size: 14px; font-weight: 600; color: #e7dde2; }
+.wait-row b { color: var(--gold); font-variant-numeric: tabular-nums; }
+.spin.small { width: 16px; height: 16px; border-width: 2.5px; }
+
+.notice.info { background: rgba(251,191,36,0.10); border: 1px solid rgba(251,191,36,0.35); color: #ffe7a3; text-align: center; }
+
+/* USDT screen */
+.net-pill { display: inline-block; margin: -4px 0 8px; padding: 5px 12px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.8px; color: var(--gold); background: rgba(251,191,36,0.10); border: 1px solid rgba(251,191,36,0.35); }
+.upi-amt.crypto { font-size: 32px; letter-spacing: -0.5px; }
+.upi-id-row b { font-size: 13px; letter-spacing: 0.2px; }
+
+
+/* ===== Collections ===== */
+.page-sub { margin: -2px 2px 16px; color: rgba(255,255,255,0.62); font-size: 14px; line-height: 1.5; }
+.sec-title { margin: 22px 2px 10px; font-size: 13px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: rgba(255,255,255,0.72); }
+.plan-row { position: relative; display: flex; align-items: center; gap: 12px; padding: 15px 16px; margin-bottom: 10px; border-radius: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09); cursor: pointer; transition: transform .12s, background .15s; }
+.plan-row:active { transform: scale(0.985); background: rgba(255,255,255,0.09); }
+.plan-row.best { border-color: rgba(251,191,36,0.55); background: rgba(251,191,36,0.08); }
+.plan-row .pl-main { flex: 1; min-width: 0; }
+.plan-row .pl-days { font-size: 17px; font-weight: 800; }
+.plan-row .pl-per { margin-top: 3px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.55); }
+.plan-row .pl-price { text-align: right; font-size: 18px; font-weight: 900; }
+.plan-row .pl-price small { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.6); }
+.plan-row .pl-tag { position: absolute; top: -9px; right: 14px; padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 900; letter-spacing: 0.6px; color: #1a1a2e; background: #FBBF24; }
+.access-card { margin-top: 16px; padding: 16px 18px; border-radius: 22px; background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.06)); border: 1px solid rgba(16,185,129,0.45); }
+.access-card .ac-top { font-size: 11px; font-weight: 900; letter-spacing: 0.8px; color: #34D399; }
+.access-card .ac-left { margin-top: 6px; font-size: 28px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.access-card .ac-date { margin-top: 3px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.6); }
+.vid-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 8px; border-radius: 16px; background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.07); cursor: pointer; transition: transform .12s, background .15s; }
+.vid-row:active { transform: scale(0.985); background: rgba(255,255,255,0.09); }
+.vid-row.locked { opacity: 0.78; }
+.vid-row.busy { opacity: 0.6; pointer-events: none; }
+.vid-n { width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: 11px; background: rgba(232,41,79,0.2); color: #FB7185; font-size: 13px; font-weight: 800; }
+.vid-t { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
+.vid-ico { width: 22px; height: 22px; flex: none; fill: none; stroke: rgba(255,255,255,0.75); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.notice.ok { color: #6EE7B7; background: rgba(16,185,129,0.14); border: 1px solid rgba(16,185,129,0.35); }
+.vid-skel { height: 56px; margin-bottom: 8px; border-radius: 16px; background: rgba(255,255,255,0.05); animation: pulse 1.2s ease-in-out infinite; }
+.hint-line { margin-top: 12px; font-size: 12px; line-height: 1.5; color: rgba(255,255,255,0.5); text-align: center; }
+
+
+/* ===== Support ===== */
+.sup-head { display: flex; align-items: center; gap: 6px; }
+.sup-head .page-title { padding-left: 0; }
+.sup-back { width: 40px; height: 40px; flex: none; margin: 22px 0 18px -6px; border: none; border-radius: 14px; background: rgba(255,255,255,0.08); color: #fff; font-size: 26px; line-height: 1; }
+.tk-row { position: relative; padding: 15px 16px; margin-bottom: 10px; border-radius: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09); cursor: pointer; }
+.tk-row:active { transform: scale(0.985); background: rgba(255,255,255,0.09); }
+.tk-top { display: flex; align-items: center; gap: 10px; }
+.tk-id { font-size: 15px; font-weight: 800; }
+.tk-cat { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tk-chip { flex: none; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.4px; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); }
+.tk-last { margin-top: 8px; font-size: 13.5px; line-height: 1.45; color: rgba(255,255,255,0.78); overflow-wrap: anywhere; }
+.tk-time { margin-top: 6px; font-size: 12px; color: rgba(255,255,255,0.45); }
+.tk-dot { position: absolute; top: 14px; right: 14px; width: 10px; height: 10px; border-radius: 50%; background: #E8294F; box-shadow: 0 0 0 4px rgba(232,41,79,0.25); }
+.cat-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+.cat-pill { padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.85); font-family: inherit; font-size: 13px; font-weight: 700; }
+.cat-pill.on { background: #E8294F; border-color: #E8294F; color: #fff; }
+.fld { width: 100%; box-sizing: border-box; padding: 13px 14px; margin-bottom: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06); color: #fff; font-family: inherit; font-size: 15px; outline: none; }
+.fld:focus { border-color: rgba(232,41,79,0.8); }
+textarea.fld { min-height: 130px; resize: vertical; line-height: 1.5; }
+.cnt { margin: -4px 4px 10px; text-align: right; font-size: 12px; color: rgba(255,255,255,0.45); }
+.thread { max-height: 46vh; overflow-y: auto; margin: 6px 0 12px; padding: 2px; }
+.bub { max-width: 86%; margin-bottom: 10px; padding: 11px 14px; border-radius: 18px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bub small { display: block; margin-top: 5px; font-size: 11px; opacity: 0.6; }
+.bub.user { margin-left: auto; background: #E8294F; border-bottom-right-radius: 6px; }
+.bub.admin { background: rgba(255,255,255,0.1); border-bottom-left-radius: 6px; }
+.bub.admin b { display: block; margin-bottom: 3px; font-size: 11px; letter-spacing: 0.5px; color: #FCA5A5; }
+
+</style>
+</head>
+<body data-page="profile">
+<div class="page">
+  <div class="sup-head"><button class="sup-back" id="backBtn" aria-label="Back">‹</button><div class="page-title">Support</div></div>
+  <div class="page-sub">Having a problem? Create a ticket. Our team replies here in the app and in your Telegram chat.</div>
+  <button class="cta" id="newBtn">＋ New ticket</button>
+  <div class="sec-title">My tickets</div>
+  <div id="list"></div>
+</div>
+
+<div class="sheet-backdrop" id="sheetBackdrop"><div class="sheet" id="sheet"></div></div>
+
+<div class="app-nav" id="appNav"></div>
+
+<script>
+/* =====================================================================
+   app.js — shared by all pages (navigation, API, toast)
+   Sab kuch window.App ke andar hai, taaki pages ke apne variables se
+   (jaise `tg`) kuch na takraye.
+   ===================================================================== */
+(function () {
+  'use strict';
+
+  const API_BASE = 'https://animezone-bot.onrender.com';
+  const tg = (window.Telegram && window.Telegram.WebApp) || null;
+
+  if (tg) {
+    try { tg.ready(); tg.expand(); } catch (e) {}
+    try { tg.setHeaderColor('#36000f'); } catch (e) {}
+    try { tg.setBackgroundColor('#0b0005'); } catch (e) {}
+    try { tg.setBottomBarColor('#2f000e'); } catch (e) {}
+  }
+
+  /* ---------- Telegram fullscreen: upar Close button / neeche system bar ke liye jagah ---------- */
+  function applyInsets() {
+    if (!tg) return;
+    const sa = tg.safeAreaInset || {};
+    const ca = tg.contentSafeAreaInset || {};
+    let top = (sa.top || 0) + (ca.top || 0);
+    let bottom = sa.bottom || 0;
+    if (tg.isFullscreen) {               // Telegram ne value na di to bhi kuch jagah chhodo
+      if (top < 60) top = 84;
+      if (bottom < 12) bottom = 20;
+    }
+    const root = document.documentElement;
+    root.style.setProperty('--safe-top', top + 'px');
+    root.style.setProperty('--safe-bottom', bottom + 'px');
+  }
+  applyInsets();
+  if (tg && tg.onEvent) {
+    ['safeAreaChanged', 'contentSafeAreaChanged', 'fullscreenChanged'].forEach((ev) => {
+      try { tg.onEvent(ev, applyInsets); } catch (e) {}
+    });
+  }
+
+  /* ---------- icons ---------- */
+  const ICONS = {
+    collections: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3z"/></svg>',
+    home: '<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+    games: '<svg viewBox="0 0 24 24"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg>',
+    store: '<svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+    content: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/></svg>',
+    profile: '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  };
+  const PAGES = [
+    { id: 'collections', href: 'collections.html', label: 'Collections' },
+    { id: 'content', href: 'exclusive.html', label: 'Content' },
+    { id: 'store', href: 'store.html', label: 'Store' },
+    { id: 'profile', href: 'profile.html', label: 'Profile' },
+  ];
+
+  const escHtml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  /* ---------- navigation ---------- */
+  function go(href) { window.location.href = href; }
+
+  function mountNav() {
+    const el = document.getElementById('appNav');
+    if (!el || el.getAttribute('data-ready')) return;
+    el.setAttribute('data-ready', '1');
+    const current = document.body.getAttribute('data-page');
+    const cur = Math.max(0, PAGES.findIndex((p) => p.id === current));
+
+    el.innerHTML = '<div class="nav-pill"></div>' + PAGES.map((p, i) =>
+      `<button class="nav-btn ${i === cur ? 'active' : ''}" data-href="${p.href}" aria-label="${p.label}">${ICONS[p.id]}<span>${p.label}</span></button>`
+    ).join('');
+
+    const pill = el.querySelector('.nav-pill');
+    const btns = Array.prototype.slice.call(el.querySelectorAll('.nav-btn'));
+
+    // Pichle page se aaye ho to pill wahin se shuru ho kar naye tab tak slide kare
+    let from = -1;
+    try {
+      from = parseInt(sessionStorage.getItem('navFrom'), 10);
+      sessionStorage.removeItem('navFrom');
+    } catch (e) {}
+    if (from >= 0 && from < PAGES.length && from !== cur) {
+      pill.style.transition = 'none';
+      pill.style.setProperty('--i', from);
+      btns[cur].classList.remove('active');
+      btns[from].classList.add('active');
+      void pill.offsetWidth;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        pill.style.transition = '';
+        pill.style.setProperty('--i', cur);
+        btns[from].classList.remove('active');
+        btns[cur].classList.add('active');
+      }));
+    } else {
+      pill.style.setProperty('--i', cur);
+    }
+
+    let leaving = false;
+    el.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-href]');
+      if (!b || leaving || b === btns[cur]) return;
+      leaving = true;
+      try { sessionStorage.setItem('navFrom', String(cur)); } catch (err) {}
+      document.body.classList.add('leaving');          // page halka sa fade-out
+      setTimeout(() => go(b.getAttribute('data-href')), 140);
+    });
+  }
+  // Back button se wapas aao to fade-out wali halat hata do
+  window.addEventListener('pageshow', () => document.body.classList.remove('leaving'));
+
+  /* ---------- API (Telegram login header ke saath) ---------- */
+  async function api(path, opts) {
+    opts = opts || {};
+    const res = await fetch(API_BASE + path, {
+      method: opts.method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': (tg && tg.initData) || '',
+      },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    let data = null;
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) {
+      if (res.status === 403 && data && data.error === 'join_required') {   // channel join pending: gate dikhao
+        try { sessionStorage.removeItem('azGateOk'); } catch (e) {}
+        showGate(data.channels || []);
+      }
+      const err = new Error((data && (data.message || data.error)) || ('HTTP ' + res.status));
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
+
+  const fmt = (n) => Number(n || 0).toLocaleString('en-IN');
+
+  /* ---------- toast ---------- */
+  let toastTimer = null;
+  function toast(msg) {
+    let t = document.getElementById('appToast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'appToast';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+
+  /* ---------- channel join gate (3 channels join karo, phir Verify) ---------- */
+  function openLink(u) {
+    try {
+      if (tg && /^https:\/\/t\.me\//.test(u) && tg.openTelegramLink) tg.openTelegramLink(u);
+      else if (tg && tg.openLink) tg.openLink(u);
+      else window.open(u, '_blank');
+    } catch (e) {}
+  }
+  function removeGate() { const g = document.getElementById('azGate'); if (g) g.remove(); }
+  function showGate(channels, message) {
+    if (!document.getElementById('azGateCss')) {
+      const st = document.createElement('style');
+      st.id = 'azGateCss';
+      st.textContent = '#azGate{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:calc(var(--safe-top,0px) + 20px) 20px calc(var(--safe-bottom,0px) + 20px);background:rgba(11,0,5,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);font-family:Inter,system-ui,sans-serif;color:#fff}' +
+        '#azGate .gate-card{width:100%;max-width:380px;max-height:100%;overflow:auto;padding:26px 22px;border-radius:28px;background:linear-gradient(160deg,rgba(232,41,79,.26),rgba(60,0,20,.9));border:1px solid rgba(255,255,255,.12);text-align:center}' +
+        '#azGate .gate-ico{font-size:40px}#azGate h2{margin:8px 0 6px;font-size:22px;font-weight:900}#azGate p{margin:0 0 18px;font-size:14px;line-height:1.5;color:rgba(255,255,255,.7)}' +
+        '#azGate .gate-row{display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:10px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);text-align:left}' +
+        '#azGate .gate-t{flex:1;min-width:0;font-size:15px;font-weight:800;overflow-wrap:anywhere}' +
+        '#azGate .gate-join{height:38px;padding:0 18px;border:none;border-radius:12px;background:#E8294F;color:#fff;font:inherit;font-size:14px;font-weight:800}' +
+        '#azGate .gate-ok{font-size:13px;font-weight:800;color:#34D399}' +
+        '#azGate .gate-verify{width:100%;height:52px;margin-top:8px;border:none;border-radius:18px;background:#fff;color:#7A0A30;font:inherit;font-size:16px;font-weight:900}' +
+        '#azGate .gate-verify:disabled{opacity:.6}#azGate .gate-msg{min-height:18px;margin-top:12px;font-size:13px;line-height:1.45;color:#FCA5A5}';
+      document.head.appendChild(st);
+    }
+    let g = document.getElementById('azGate');
+    if (!g) { g = document.createElement('div'); g.id = 'azGate'; document.body.appendChild(g); }
+    const list = channels || [];
+    g.innerHTML = '<div class="gate-card"><div class="gate-ico">🔒</div><h2>Join to continue</h2><p>Join all the channels below, then tap Verify.</p>' +
+      list.map((c, i) => '<div class="gate-row"><div class="gate-t">' + escHtml(c.title) + '</div>' + (c.joined ? '<span class="gate-ok">✓ Joined</span>' : '<button class="gate-join" data-i="' + i + '">Join</button>') + '</div>').join('') +
+      '<button class="gate-verify" id="gateVerify">✅ I\'ve joined — Verify</button><div class="gate-msg" id="gateMsg">' + escHtml(message || '') + '</div></div>';
+    g.onclick = async (e) => {
+      const j = e.target.closest('.gate-join');
+      if (j) { const c = list[Number(j.getAttribute('data-i'))]; if (c && c.link) openLink(c.link); return; }
+      if (!e.target.closest('#gateVerify')) return;
+      const btn = document.getElementById('gateVerify'), msg = document.getElementById('gateMsg');
+      btn.disabled = true; btn.textContent = 'Checking…'; msg.textContent = '';
+      try {
+        const r = await api('/api/membership/verify', { method: 'POST' });
+        if (r.ok) {
+          try { sessionStorage.setItem('azGateOk', JSON.stringify({ at: Date.now() })); } catch (err) {}
+          removeGate(); toast('Verified ✅');
+          try { window.dispatchEvent(new CustomEvent('az-gate-ok')); } catch (err) {}
+        } else {
+          showGate(r.channels, 'You haven\'t joined: ' + r.channels.filter((c) => !c.joined).map((c) => c.title).join(', ') + '. Join, then tap Verify again.');
+        }
+      } catch (err) {
+        btn.disabled = false; btn.textContent = '✅ I\'ve joined — Verify';
+        msg.textContent = 'Couldn\'t verify. Check your connection and try again.';
+      }
+    };
+  }
+  async function gateCheck() {
+    if (/[?&]demo=1/.test(window.location.search)) return;
+    try { const c = JSON.parse(sessionStorage.getItem('azGateOk') || 'null'); if (c && Date.now() - c.at < 60000) return; } catch (e) {}
+    try {
+      const r = await api('/api/membership');
+      if (r && r.ok) { try { sessionStorage.setItem('azGateOk', JSON.stringify({ at: Date.now() })); } catch (e) {} removeGate(); }
+      else if (r && r.channels) showGate(r.channels);
+    } catch (e) { /* server so raha ho to kuch mat roko: har action par server khud check karta hai */ }
+  }
+
+  // Nav turant lagao (script body ke end mein hai), taaki pehle paint se hi dikhe
+  if (document.getElementById('appNav')) mountNav();
+  else document.addEventListener('DOMContentLoaded', mountNav);
+
+  setTimeout(gateCheck, 0);
+
+  window.App = { API_BASE, tg, api, go, toast, fmt, icons: ICONS, gateCheck, showGate };
+})();
+
+</script>
+<script>
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+const STATUS = { open: { t: 'OPEN', c: '#F59E0B' }, answered: { t: 'ANSWERED', c: '#10B981' }, closed: { t: 'CLOSED', c: '#9CA3AF' } };
+let tickets = [], cats = { payment: 'Payment issue', item: "Didn't receive my item", access: 'Collection access', video: 'Video problem', other: 'Other' };
+let loaded = false, mode = null, cur = null, busy = false, err = '', replyText = '', pollTimer = null;
+const form = { cat: '', order: '', msg: '' };
+
+const ago = (iso) => {
+  const s = Math.max(0, Math.floor((Date.now() - Date.parse(iso)) / 1000));
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + ' min ago';
+  if (s < 86400) return Math.floor(s / 3600) + ' h ago';
+  return Math.floor(s / 86400) + ' d ago';
+};
+const when = (iso) => { try { return new Date(iso).toLocaleString([], { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } };
+
+function rowHTML(t) {
+  const st = STATUS[t.status] || STATUS.open;
+  return '<div class="tk-row" data-id="' + esc(t.id) + '">' + (t.unread ? '<i class="tk-dot"></i>' : '') +
+    '<div class="tk-top"><span class="tk-id">' + esc(t.id) + '</span><span class="tk-cat">' + esc(t.categoryLabel) + '</span><span class="tk-chip" style="--c:' + st.c + '">' + st.t + '</span></div>' +
+    '<div class="tk-last">' + esc(t.last) + '</div><div class="tk-time">' + esc(ago(t.updatedAt)) + '</div></div>';
+}
+function renderList() {
+  const box = document.getElementById('list');
+  if (!loaded) { box.innerHTML = '<div class="skeleton" style="height:90px"></div><div class="skeleton" style="height:90px"></div>'; return; }
+  box.innerHTML = tickets.length ? tickets.map(rowHTML).join('') : '<div class="empty"><h3>No tickets yet</h3><p>If something goes wrong, tap “New ticket” and tell us what happened.</p></div>';
+}
+async function loadList() {
+  try {
+    const r = await App.api('/api/support/tickets');
+    tickets = r.tickets || []; if (r.categories) cats = r.categories; loaded = true; renderList();
+  } catch (e) {
+    loaded = true;
+    document.getElementById('list').innerHTML = '<div class="empty"><h3>Couldn\'t load your tickets</h3><p>Please check your connection and try again.</p><button class="retry-btn" data-retry="1">Try again</button></div>';
+  }
+}
+
+function newHTML() {
+  return '<div class="sheet-body" style="padding-top:24px"><div class="sheet-title">New ticket</div><div class="sheet-desc">What is your problem about?</div>' +
+    '<div class="cat-row">' + Object.keys(cats).map((k) => '<button class="cat-pill ' + (form.cat === k ? 'on' : '') + '" data-act="cat" data-k="' + esc(k) + '">' + esc(cats[k]) + '</button>').join('') + '</div>' +
+    '<input class="fld" id="fOrder" maxlength="20" placeholder="Order ID (optional) e.g. UP0012" value="' + esc(form.order) + '">' +
+    '<textarea class="fld" id="fMsg" maxlength="1500" placeholder="Describe your problem. Tell us what you did and what happened.">' + esc(form.msg) + '</textarea>' +
+    '<div class="cnt" id="fCnt">' + form.msg.length + ' / 1500</div>' +
+    (err ? '<div class="notice err">' + esc(err) + '</div>' : '') +
+    '<div class="btn-row2"><button class="cta ghost" data-act="close"' + (busy ? ' disabled' : '') + '>Cancel</button><button class="cta" data-act="submit"' + (busy ? ' disabled' : '') + '>' + (busy ? '<span class="spin"></span>Sending' : 'Send ticket') + '</button></div></div>';
+}
+function detailHTML(t) {
+  const st = STATUS[t.status] || STATUS.open;
+  const msgs = (t.messages || []).map((m) => '<div class="bub ' + (m.from === 'admin' ? 'admin' : 'user') + '">' + (m.from === 'admin' ? '<b>SUPPORT</b>' : '') + esc(m.text) + '<small>' + esc(when(m.at)) + '</small></div>').join('');
+  const reply = t.status === 'closed'
+    ? '<div class="notice info">This ticket is closed. If you still need help, create a new ticket.</div><div class="btn-row2"><button class="cta ghost" data-act="close">Close</button><button class="cta" data-act="newfrom">New ticket</button></div>'
+    : '<textarea class="fld" id="fReply" maxlength="1500" placeholder="Write a message…" style="min-height:80px">' + esc(replyText) + '</textarea>' + (err ? '<div class="notice err">' + esc(err) + '</div>' : '') +
+      '<div class="btn-row2"><button class="cta ghost" data-act="close"' + (busy ? ' disabled' : '') + '>Close</button><button class="cta" data-act="send"' + (busy ? ' disabled' : '') + '>' + (busy ? '<span class="spin"></span>Sending' : 'Send') + '</button></div>';
+  return '<div class="sheet-body" style="padding-top:24px"><div class="tk-top"><span class="sheet-title" style="margin:0">' + esc(t.id) + '</span><span class="tk-cat">' + esc(t.categoryLabel) + (t.orderRef ? ' · ' + esc(t.orderRef) : '') + '</span><span class="tk-chip" style="--c:' + st.c + '">' + st.t + '</span></div>' +
+    '<div class="thread" id="thread">' + msgs + '</div>' + reply + '</div>';
+}
+function renderSheet() {
+  const sh = document.getElementById('sheet');
+  if (mode === 'new') sh.innerHTML = newHTML();
+  else if (mode === 'detail' && cur) { sh.innerHTML = detailHTML(cur); const th = document.getElementById('thread'); if (th) th.scrollTop = th.scrollHeight; }
+}
+function openSheet(m) { mode = m; err = ''; document.getElementById('sheetBackdrop').classList.add('open'); renderSheet(); }
+function closeSheet() { mode = null; cur = null; busy = false; err = ''; clearInterval(pollTimer); document.getElementById('sheetBackdrop').classList.remove('open'); loadList(); }
+
+async function openTicket(id) {
+  replyText = ''; cur = { id, categoryLabel: '', status: 'open', messages: [] }; openSheet('detail');
+  try { cur = await App.api('/api/support/tickets/' + encodeURIComponent(id)); renderSheet(); } catch (e) { err = 'Couldn\'t load this ticket.'; renderSheet(); }
+  clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    if (mode !== 'detail' || busy || !cur) return;
+    try { const t = await App.api('/api/support/tickets/' + encodeURIComponent(cur.id)); if (t.messages.length !== cur.messages.length || t.status !== cur.status) { const ta = document.getElementById('fReply'); if (ta) replyText = ta.value; cur = t; renderSheet(); } } catch (e) {}
+  }, 15000);
+}
+async function submitTicket() {
+  if (busy) return;
+  if (!form.cat) { err = 'Please choose what your problem is about.'; renderSheet(); return; }
+  if (form.msg.trim().length < 10) { err = 'Please describe your problem in a few words (at least 10 characters).'; renderSheet(); return; }
+  busy = true; err = ''; renderSheet();
+  try {
+    const t = await App.api('/api/support/tickets', { method: 'POST', body: { category: form.cat, message: form.msg.trim(), orderRef: form.order.trim() } });
+    form.cat = ''; form.order = ''; form.msg = ''; busy = false; cur = t; replyText = ''; App.toast('Ticket created'); mode = 'detail'; renderSheet(); loadList();
+  } catch (e) { busy = false; err = (e.data && e.data.message) || (e.status === 401 ? 'Please open this app from the Telegram bot.' : 'Couldn\'t create the ticket. Please try again.'); renderSheet(); }
+}
+async function sendReply() {
+  const ta = document.getElementById('fReply'); if (ta) replyText = ta.value;
+  if (busy || !cur) return;
+  if (!replyText.trim()) { err = 'Please type your message.'; renderSheet(); return; }
+  busy = true; err = ''; renderSheet();
+  try { const t = await App.api('/api/support/tickets/' + encodeURIComponent(cur.id) + '/reply', { method: 'POST', body: { message: replyText.trim() } }); cur = t; replyText = ''; busy = false; renderSheet(); App.toast('Message sent'); }
+  catch (e) { busy = false; err = (e.data && e.data.message) || 'Couldn\'t send. Please try again.'; renderSheet(); }
+}
+
+document.getElementById('sheet').addEventListener('input', (e) => {
+  if (e.target.id === 'fMsg') { form.msg = e.target.value; document.getElementById('fCnt').textContent = form.msg.length + ' / 1500'; }
+  else if (e.target.id === 'fOrder') form.order = e.target.value;
+  else if (e.target.id === 'fReply') replyText = e.target.value;
+});
+document.getElementById('sheetBackdrop').addEventListener('click', (e) => {
+  if (e.target.id === 'sheetBackdrop') { if (!busy) closeSheet(); return; }
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const a = el.dataset.act;
+  if (a === 'close') { if (!busy) closeSheet(); }
+  else if (a === 'cat') { form.cat = el.dataset.k; err = ''; renderSheet(); }
+  else if (a === 'submit') submitTicket();
+  else if (a === 'send') sendReply();
+  else if (a === 'newfrom') { cur = null; clearInterval(pollTimer); openSheet('new'); }
+});
+document.getElementById('list').addEventListener('click', (e) => {
+  if (e.target.closest('[data-retry]')) { loaded = false; renderList(); loadList(); return; }
+  const row = e.target.closest('[data-id]');
+  if (row) openTicket(row.dataset.id);
+});
+document.getElementById('newBtn').addEventListener('click', () => openSheet('new'));
+document.getElementById('backBtn').addEventListener('click', () => App.go('profile.html'));
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !mode) loadList(); });
+
+renderList();
+loadList();
+
+</script>
+</body>
+</html>
